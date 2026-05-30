@@ -1,0 +1,40 @@
+name: lab_management_system
+
+services:
+    mysql:
+        image: mysql:8.0.36
+        container_name: lab-management-mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: root123456
+            MYSQL_DATABASE: lab_management_system
+            TZ: Asia/Shanghai
+        ports:
+            - "3306:3306"
+        command:
+            - --default-authentication-plugin=mysql_native_password
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_0900_ai_ci
+            - --sql_mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+        volumes:
+            - mysql_data:/var/lib/mysql
+            - ./docker/mysql/init:/docker-entrypoint-initdb.d
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot123456"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+    redis:
+        image: redis:7.2.4
+        container_name: lab-management-redis
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        command: ["redis-server", "--appendonly", "yes"]
+        volumes:
+            - redis_data:/data
+
+volumes:
+    mysql_data:
+    redis_data:

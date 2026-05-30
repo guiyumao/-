@@ -1,0 +1,21 @@
+USE lab_management_system;
+
+UPDATE menu SET menu_name = '仪表盘' WHERE id = 1;
+UPDATE menu SET menu_name = '系统管理' WHERE id = 2;
+UPDATE menu SET menu_name = '实验室管理' WHERE id = 3;
+UPDATE menu SET menu_name = '用户管理' WHERE id = 4;
+UPDATE menu SET menu_name = '角色与菜单' WHERE id = 5;
+UPDATE menu SET menu_name = '资产档案' WHERE id = 6;
+UPDATE menu SET menu_name = '设备分类' WHERE id = 7;
+UPDATE menu SET menu_name = '设备台账' WHERE id = 8;
+UPDATE menu SET menu_name = '耗材分类' WHERE id = 9;
+UPDATE menu SET menu_name = '耗材台账' WHERE id = 10;
+UPDATE menu SET menu_name = '危化品台账' WHERE id = 11;
+UPDATE menu SET menu_name = '业务流程' WHERE id = 12;
+UPDATE menu SET menu_name = '设备借用' WHERE id = 13;
+UPDATE menu SET menu_name = '设备维修' WHERE id = 14;
+UPDATE menu SET menu_name = '设备校准' WHERE id = 15;
+UPDATE menu SET menu_name = '耗材入库' WHERE id = 16;
+UPDATE menu SET menu_name = '耗材出库' WHERE id = 17;
+UPDATE menu SET menu_name = '危化品领用' WHERE id = 18;
+UPDATE menu SET menu_name = '报表中心' WHERE id = 19;
