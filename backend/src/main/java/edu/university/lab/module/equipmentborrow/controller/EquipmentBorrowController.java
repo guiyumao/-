@@ -3,6 +3,8 @@ package edu.university.lab.module.equipmentborrow.controller;
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
 import edu.university.lab.common.query.PageQuery;
+import edu.university.lab.module.equipmentborrow.dto.EquipmentBorrowReminderRequest;
+import edu.university.lab.module.equipmentborrow.dto.EquipmentBorrowStatusUpdateRequest;
 import edu.university.lab.module.equipmentborrow.dto.EquipmentReturnRequest;
 import edu.university.lab.module.equipmentborrow.entity.EquipmentBorrow;
 import edu.university.lab.module.equipmentborrow.service.EquipmentBorrowBusinessService;
@@ -57,6 +59,24 @@ public class EquipmentBorrowController {
     @PutMapping("/{id}/return")
     public ApiResponse<Boolean> returnEquipment(@PathVariable Integer id, @Valid @RequestBody EquipmentReturnRequest request) {
         return ApiResponse.success("returned", equipmentBorrowBusinessService.returnEquipment(id, request.getReturnCondition(), request.getRemarks()));
+    }
+
+    @Operation(summary = "更新设备借用状态")
+    @PreAuthorize("hasAuthority('equipment_borrow:edit')")
+    @PutMapping("/{id}/status")
+    public ApiResponse<EquipmentBorrow> updateStatus(@PathVariable Integer id, @Valid @RequestBody EquipmentBorrowStatusUpdateRequest request) {
+        return ApiResponse.success(equipmentBorrowBusinessService.updateBorrowStatus(
+            id,
+            request.getBorrowStatus(),
+            request.getReturnCondition(),
+            request.getRemarks()));
+    }
+
+    @Operation(summary = "发送逾期催还通知")
+    @PreAuthorize("hasAuthority('equipment_borrow:edit')")
+    @PostMapping("/{id}/overdue-reminder")
+    public ApiResponse<Boolean> sendOverdueReminder(@PathVariable Integer id, @Valid @RequestBody EquipmentBorrowReminderRequest request) {
+        return ApiResponse.success("sent", equipmentBorrowBusinessService.sendOverdueReminder(id, request.getMessage()));
     }
 
     @Operation(summary = "删除设备借用记录")

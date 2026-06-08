@@ -3,11 +3,20 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $backendDir = Join-Path $projectRoot 'backend'
+. (Join-Path $projectRoot 'scripts\dev-env.ps1')
+$config = Get-ProjectEnv -ProjectRoot $projectRoot
+$backendUrl = Get-RequiredEnvValue -Config $config -Key 'BACKEND_PUBLIC_URL'
+$javaHome = Get-RequiredEnvValue -Config $config -Key 'APP_JAVA_HOME'
 
 try {
     Set-Location $backendDir
     $Host.UI.RawUI.WindowTitle = 'Lab Management Backend'
-    Write-Host 'Starting Spring Boot backend on http://127.0.0.1:8080 ...' -ForegroundColor Cyan
+    foreach ($entry in $config.GetEnumerator()) {
+        Set-Item -Path ("Env:" + $entry.Key) -Value $entry.Value
+    }
+    $env:JAVA_HOME = $javaHome
+    $env:Path = "$javaHome\bin;" + [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    Write-Host "Starting Spring Boot backend on $backendUrl ..." -ForegroundColor Cyan
     .\mvnw.cmd spring-boot:run
 }
 catch {

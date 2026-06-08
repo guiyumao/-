@@ -3,6 +3,7 @@ package edu.university.lab.module.reminder.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import edu.university.lab.auth.security.LoginUser;
 import edu.university.lab.auth.security.SecurityUtils;
+import edu.university.lab.common.constant.RoleConstants;
 import edu.university.lab.module.consumable.entity.Consumable;
 import edu.university.lab.module.consumable.mapper.ConsumableMapper;
 import edu.university.lab.module.equipment.entity.Equipment;
@@ -109,7 +110,7 @@ public class ReminderServiceImpl implements ReminderService {
         return loginUser != null
             && loginUser.getUser() != null
             && loginUser.getUser().getLaboratoryId() != null
-            && loginUser.getRoleCodes().stream().noneMatch(role -> "sys_admin".equals(role) || "lab_director".equals(role));
+            && loginUser.getRoleCodes().stream().noneMatch(RoleConstants.LAB_SCOPE_BYPASS_ROLES::contains);
     }
 
     private String findLaboratoryName(Integer laboratoryId) {

@@ -4,27 +4,30 @@ import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * OpenAPI 文档配置
- */
 @Configuration
+@RequiredArgsConstructor
+@EnableConfigurationProperties({OpenApiProperties.class, InitialAdminProperties.class})
 public class OpenApiConfig {
+
+    private final OpenApiProperties properties;
 
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("Laboratory Management System API")
-                .version("1.0.0")
-                .description("实验室设备与耗材管理系统后端接口文档")
+                .title(properties.getTitle())
+                .version(properties.getVersion())
+                .description(properties.getDescription())
                 .contact(new Contact()
-                    .name("Laboratory Management Team")
-                    .email("lab-admin@university.edu")))
+                    .name(properties.getContactName())
+                    .email(properties.getContactEmail())))
             .externalDocs(new ExternalDocumentation()
-                .description("Project README")
-                .url("http://localhost:8080/swagger-ui.html"));
+                .description(properties.getExternalDocsDescription())
+                .url(properties.getExternalDocsUrl()));
     }
 }

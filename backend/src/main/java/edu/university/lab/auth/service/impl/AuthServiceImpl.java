@@ -1,22 +1,30 @@
 package edu.university.lab.auth.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import edu.university.lab.auth.dto.AuthContextResponse;
 import edu.university.lab.auth.dto.LoginRequest;
 import edu.university.lab.auth.dto.LoginResponse;
 import edu.university.lab.auth.dto.MenuItem;
+import edu.university.lab.auth.dto.RegisterRequest;
+import edu.university.lab.auth.dto.RegisterResponse;
 import edu.university.lab.auth.dto.UserProfile;
 import edu.university.lab.auth.security.CustomUserDetailsService;
 import edu.university.lab.auth.security.JwtTokenProvider;
 import edu.university.lab.auth.security.LoginUser;
 import edu.university.lab.auth.security.SecurityUtils;
 import edu.university.lab.auth.service.AuthService;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import edu.university.lab.common.constant.RoleConstants;
+import edu.university.lab.common.constant.UserConstants;
+import edu.university.lab.module.laboratory.entity.Laboratory;
+import edu.university.lab.module.laboratory.mapper.LaboratoryMapper;
 import edu.university.lab.module.menu.entity.Menu;
 import edu.university.lab.module.menu.mapper.MenuMapper;
 import edu.university.lab.module.role.entity.Role;
 import edu.university.lab.module.role.mapper.RoleMapper;
 import edu.university.lab.module.rolemenu.entity.RoleMenu;
 import edu.university.lab.module.rolemenu.mapper.RoleMenuMapper;
+import edu.university.lab.module.user.entity.User;
+import edu.university.lab.module.user.mapper.UserMapper;
 import edu.university.lab.module.userrole.entity.UserRole;
 import edu.university.lab.module.userrole.mapper.UserRoleMapper;
 import java.util.ArrayList;
@@ -26,28 +34,25 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-/**
- * 认证服务实现
- */
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
-
     private final CustomUserDetailsService customUserDetailsService;
-
     private final JwtTokenProvider jwtTokenProvider;
-
     private final UserRoleMapper userRoleMapper;
-
     private final RoleMapper roleMapper;
-
     private final RoleMenuMapper roleMenuMapper;
-
     private final MenuMapper menuMapper;
+    private final UserMapper userMapper;
+    private final LaboratoryMapper laboratoryMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -63,6 +68,46 @@ public class AuthServiceImpl implements AuthService {
             .user(toProfile(loginUser))
             .menus(buildMenus(loginUser.getRoleCodes()))
             .permissions(loginUser.getPermissionCodes())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public RegisterResponse register(RegisterRequest request) {
+        validateRegisterRequest(request);
+
+        String roleCode = resolveRoleCode(request.getRegisterType());
+        Role role = roleMapper.selectOne(new LambdaQueryWrapper<Role>()
+            .eq(Role::getRoleCode, roleCode)
+            .eq(Role::getStatus, UserConstants.STATUS_ENABLED)
+            .last("LIMIT 1"));
+        if (role == null) {
+            throw new IllegalArgumentException("Registration role is not available");
+        }
+
+        User user = new User();
+        user.setLaboratoryId(request.getLaboratoryId());
+        user.setUsername(request.getUsername().trim());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRealName(request.getRealName().trim());
+        user.setUserNo(request.getUserNo().trim());
+        user.setPhone(normalize(request.getPhone()));
+        user.setEmail(normalize(request.getEmail()));
+        user.setUserType(resolveUserType(request.getRegisterType()));
+        user.setStatus(UserConstants.STATUS_ENABLED);
+        userMapper.insert(user);
+
+        UserRole userRole = new UserRole();
+        userRole.setUserId(user.getId());
+        userRole.setRoleId(role.getId());
+        userRoleMapper.insert(userRole);
+
+        return RegisterResponse.builder()
+            .userId(user.getId())
+            .username(user.getUsername())
+            .realName(user.getRealName())
+            .roleCode(roleCode)
+            .message("registered")
             .build();
     }
 
@@ -83,6 +128,41 @@ public class AuthServiceImpl implements AuthService {
             .menus(buildMenus(loginUser.getRoleCodes()))
             .permissions(loginUser.getPermissionCodes())
             .build();
+    }
+
+    private void validateRegisterRequest(RegisterRequest request) {
+        Laboratory laboratory = laboratoryMapper.selectById(request.getLaboratoryId());
+        if (laboratory == null || laboratory.getStatus() == null || laboratory.getStatus() != UserConstants.STATUS_ENABLED) {
+            throw new IllegalArgumentException("Laboratory is unavailable");
+        }
+        if (existsUser(User::getUsername, request.getUsername().trim())) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (existsUser(User::getUserNo, request.getUserNo().trim())) {
+            throw new IllegalArgumentException("User number already exists");
+        }
+        if (StringUtils.hasText(request.getPhone()) && existsUser(User::getPhone, request.getPhone().trim())) {
+            throw new IllegalArgumentException("Phone already exists");
+        }
+        if (StringUtils.hasText(request.getEmail()) && existsUser(User::getEmail, request.getEmail().trim())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+    }
+
+    private <T> boolean existsUser(com.baomidou.mybatisplus.core.toolkit.support.SFunction<User, T> column, T value) {
+        return userMapper.selectCount(new LambdaQueryWrapper<User>().eq(column, value)) > 0;
+    }
+
+    private String resolveRoleCode(String registerType) {
+        return "student".equals(registerType) ? RoleConstants.STUDENT : RoleConstants.TEACHER;
+    }
+
+    private int resolveUserType(String registerType) {
+        return "student".equals(registerType) ? UserConstants.USER_TYPE_STUDENT : UserConstants.USER_TYPE_TEACHER;
+    }
+
+    private String normalize(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 
     private UserProfile toProfile(LoginUser loginUser) {

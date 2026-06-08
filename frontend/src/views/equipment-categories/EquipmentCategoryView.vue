@@ -1,14 +1,35 @@
 <template>
-    <CrudPage :config="config" />
+    <CategoryCardPage :config="config" />
 </template>
 
 <script setup lang="ts">
-import CrudPage from '../shared/CrudPage.vue'
+import { computed, onMounted } from 'vue'
+import CategoryCardPage from '../shared/CategoryCardPage.vue'
+import { useEquipmentCrudConfig } from '../equipment/useEquipmentCrudConfig'
+import { useCrudSync } from '../../utils/crudSync'
 
-const config = {
+const { config: equipmentConfig, loadMappings, syncKeys } = useEquipmentCrudConfig()
+const syncSource = 'equipment-category-view-mappings'
+
+const config = computed(() => ({
     title: '设备分类',
     subtitle: '维护分析仪器、精密仪器与通用设备等分类。',
     endpoint: '/equipment-categories',
+    codeProp: 'categoryCode',
+    nameProp: 'categoryName',
+    descriptionProp: 'description',
+    syncKeys,
+    relation: {
+        endpoint: '/equipment',
+        foreignKey: 'categoryId',
+        title: '对应设备',
+        codeProp: 'equipmentCode',
+        nameProp: 'equipmentName',
+        metaProps: ['model', 'storageLocation'],
+        pageSize: 100,
+        emptyText: '当前分类下暂无设备。',
+        editor: equipmentConfig.value,
+    },
     createPermission: 'equipment_category:edit',
     editPermission: 'equipment_category:edit',
     deletePermission: 'equipment_category:edit',
@@ -24,5 +45,8 @@ const config = {
         description: '',
         status: 1,
     }),
-}
+}))
+
+useCrudSync(syncKeys, loadMappings, syncSource)
+onMounted(loadMappings)
 </script>

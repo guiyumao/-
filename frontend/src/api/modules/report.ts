@@ -1,5 +1,6 @@
-import { getResult } from '../http'
+import { buildApiUrl, withAuthHeader } from '../../config/app'
 import { getToken } from '../../utils/token'
+import { getResult } from '../http'
 
 export interface ReportRow {
     reportType: string
@@ -39,16 +40,16 @@ function buildReportExportUrl(params: ReportQuery) {
             search.append(key, String(value))
         }
     })
-    return `http://127.0.0.1:8080/api/reports/summary/export?${search.toString()}`
+    return `${buildApiUrl('/reports/summary/export')}?${search.toString()}`
 }
 
 export async function downloadReportSummary(params: ReportQuery) {
     const token = getToken()
     const response = await fetch(buildReportExportUrl(params), {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: withAuthHeader(token),
     })
     if (!response.ok) {
-        throw new Error('导出失败')
+        throw new Error('瀵煎嚭澶辫触')
     }
     return response.blob()
 }

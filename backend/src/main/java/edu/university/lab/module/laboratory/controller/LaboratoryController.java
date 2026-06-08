@@ -8,6 +8,7 @@ import edu.university.lab.module.laboratory.service.LaboratoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +33,12 @@ public class LaboratoryController {
     @GetMapping
     public ApiResponse<PageResponse<Laboratory>> page(@Valid PageQuery query) {
         return ApiResponse.success(PageResponse.from(laboratoryService.pageQuery(query)));
+    }
+
+    @Operation(summary = "获取可用实验室列表")
+    @GetMapping("/public-options")
+    public ApiResponse<List<Laboratory>> publicOptions() {
+        return ApiResponse.success(laboratoryService.listEnabled());
     }
 
     @Operation(summary = "获取实验室详情")

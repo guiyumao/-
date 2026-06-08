@@ -8,6 +8,25 @@
             <el-button @click="loadData">刷新</el-button>
         </div>
 
+        <el-card class="card-panel notification-panel" shadow="never">
+            <template #header>
+                <div style="font-weight: 700">我的通知</div>
+            </template>
+            <el-table v-loading="loading" :data="notifications">
+                <el-table-column label="标题" min-width="150">
+                    <template #default="{ row }">
+                        <el-tag :type="row.readStatus === 0 ? 'danger' : 'info'" effect="light">
+                            {{ row.title }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="content" label="内容" min-width="360" show-overflow-tooltip />
+                <el-table-column label="发送时间" min-width="160">
+                    <template #default="{ row }">{{ formatDateTime(row.createTime) }}</template>
+                </el-table-column>
+            </el-table>
+        </el-card>
+
         <el-row :gutter="20">
             <el-col :xs="24" :lg="12">
                 <el-card class="card-panel" shadow="never">
@@ -49,18 +68,21 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { getReminders, type ReminderItem } from '../../api/modules/reminder'
+import { getMyNotifications, getReminders, type ReminderItem, type UserNotification } from '../../api/modules/reminder'
+import { formatDateTime } from '../business/EquipmentBorrowBusinessHelpers'
 
 const loading = ref(false)
 const pendingCalibrations = ref<ReminderItem[]>([])
 const expiringConsumables = ref<ReminderItem[]>([])
+const notifications = ref<UserNotification[]>([])
 
 async function loadData() {
     loading.value = true
     try {
-        const result = await getReminders()
+        const [result, notificationResult] = await Promise.all([getReminders(), getMyNotifications()])
         pendingCalibrations.value = result.data.pendingCalibrations
         expiringConsumables.value = result.data.expiringConsumables
+        notifications.value = notificationResult.data
     } finally {
         loading.value = false
     }
@@ -68,3 +90,9 @@ async function loadData() {
 
 loadData()
 </script>
+
+<style scoped>
+.notification-panel {
+    margin-bottom: 20px;
+}
+</style>

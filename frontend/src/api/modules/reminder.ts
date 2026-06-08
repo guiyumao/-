@@ -14,6 +14,23 @@ export interface ReminderResponse {
     expiringConsumables: ReminderItem[]
 }
 
+export interface UserNotification {
+    id: number
+    receiverUserId: number
+    senderUserId?: number
+    title: string
+    content: string
+    notificationType: string
+    relatedType?: string
+    relatedId?: number
+    readStatus: number
+    createTime?: string
+}
+
 export function getReminders() {
     return getResult<ReminderResponse>('/reminders')
+}
+
+export function getMyNotifications() {
+    return getResult<UserNotification[]>('/notifications/mine')
 }

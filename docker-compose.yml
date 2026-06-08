@@ -1,16 +1,16 @@
-name: lab_management_system
+name: ${APP_NAME}
 
 services:
     mysql:
-        image: mysql:8.0.36
-        container_name: lab-management-mysql
+        image: ${MYSQL_IMAGE}
+        container_name: ${MYSQL_CONTAINER_NAME}
         restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: root123456
-            MYSQL_DATABASE: lab_management_system
-            TZ: Asia/Shanghai
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_NAME}
+            TZ: ${APP_TIMEZONE}
         ports:
-            - "3306:3306"
+            - "${DB_PORT}:3306"
         command:
             - --default-authentication-plugin=mysql_native_password
             - --character-set-server=utf8mb4
@@ -20,17 +20,17 @@ services:
             - mysql_data:/var/lib/mysql
             - ./docker/mysql/init:/docker-entrypoint-initdb.d
         healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot123456"]
+            test: ["CMD", "mysqladmin", "ping", "-h", "${MYSQL_HEALTHCHECK_HOST}", "-p${MYSQL_ROOT_PASSWORD}"]
             interval: 10s
             timeout: 5s
             retries: 10
 
     redis:
-        image: redis:7.2.4
-        container_name: lab-management-redis
+        image: ${REDIS_IMAGE}
+        container_name: ${REDIS_CONTAINER_NAME}
         restart: unless-stopped
         ports:
-            - "6379:6379"
+            - "${REDIS_PORT}:6379"
         command: ["redis-server", "--appendonly", "yes"]
         volumes:
             - redis_data:/data

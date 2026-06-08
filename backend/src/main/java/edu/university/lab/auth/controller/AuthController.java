@@ -3,6 +3,8 @@ package edu.university.lab.auth.controller;
 import edu.university.lab.auth.dto.AuthContextResponse;
 import edu.university.lab.auth.dto.LoginRequest;
 import edu.university.lab.auth.dto.LoginResponse;
+import edu.university.lab.auth.dto.RegisterRequest;
+import edu.university.lab.auth.dto.RegisterResponse;
 import edu.university.lab.auth.dto.UserProfile;
 import edu.university.lab.auth.service.AuthService;
 import edu.university.lab.common.api.ApiResponse;
@@ -16,9 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 认证接口
- */
 @Tag(name = "Authentication")
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +30,12 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.success(authService.login(request));
+    }
+
+    @Operation(summary = "用户注册")
+    @PostMapping("/register")
+    public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ApiResponse.success(authService.register(request));
     }
 
     @Operation(summary = "获取当前用户信息")

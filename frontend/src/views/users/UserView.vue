@@ -1,59 +1,95 @@
 <template>
-    <div>
+    <div class="user-page">
         <div class="page-header">
             <div>
                 <h2 class="page-title">用户管理</h2>
                 <p class="page-subtitle">维护实验室平台的登录账号、基础信息与密码重置。</p>
             </div>
-            <el-space>
-                <el-input v-model="query.keyword" placeholder="请输入姓名、用户名或工号" style="width: 280px" clearable />
+            <div class="table-tools">
+                <el-input v-model="query.keyword" placeholder="请输入姓名、用户名或工号" class="user-search" clearable />
                 <el-button @click="loadData">查询</el-button>
                 <el-button v-permission="'user:edit'" type="primary" @click="handleCreate">新增用户</el-button>
-            </el-space>
+            </div>
         </div>
 
-        <el-card class="card-panel" shadow="never">
-            <el-table v-loading="loading" :data="records">
-                <el-table-column prop="username" label="用户名" min-width="140" />
-                <el-table-column prop="realName" label="姓名" min-width="120" />
-                <el-table-column prop="userNo" label="工号/学号" min-width="140" />
-                <el-table-column prop="phone" label="手机号" min-width="140" />
-                <el-table-column prop="email" label="邮箱" min-width="180" />
-                <el-table-column label="所属实验室" min-width="140">
+        <section class="card-panel surface-highlight table-shell">
+            <div class="table-head">
+                <div class="table-head-title">
+                    <div class="eyebrow">Accounts</div>
+                    <h3>人员账号列表</h3>
+                    <p>集中维护实验室用户身份、归属实验室和账号状态，便于后续权限与业务流程联动。</p>
+                </div>
+                <div class="table-meta">
+                    <div class="count-badge">
+                        <span>当前用户</span>
+                        <strong>{{ query.total }}</strong>
+                    </div>
+                    <div class="table-summary">共 {{ query.total }} 条记录</div>
+                </div>
+            </div>
+
+            <el-table v-loading="loading" :data="records" class="user-table">
+                <el-table-column label="用户名" min-width="150">
                     <template #default="{ row }">
-                        {{ laboratoryMap[String(row.laboratoryId)] || row.laboratoryId || '-' }}
+                        <span class="data-code">{{ row.username }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="用户类型" min-width="120">
+                <el-table-column label="姓名" min-width="130">
                     <template #default="{ row }">
-                        {{ userTypeMap[String(row.userType)] || row.userType }}
+                        <div class="data-stack">
+                            <strong>{{ row.realName }}</strong>
+                            <span>{{ userTypeMap[String(row.userType)] || row.userType }}</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column label="工号/学号" min-width="150">
+                    <template #default="{ row }">
+                        <span class="data-chip">{{ row.userNo }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="phone" label="手机号" min-width="150" />
+                <el-table-column label="邮箱" min-width="220">
+                    <template #default="{ row }">
+                        <span class="data-secondary">{{ row.email || '-' }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="所属实验室" min-width="140">
+                    <template #default="{ row }">
+                        <span class="data-secondary">{{ laboratoryMap[String(row.laboratoryId)] || row.laboratoryId || '-' }}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="状态" min-width="100">
                     <template #default="{ row }">
-                        <el-tag :type="Number(row.status ?? 1) === 1 ? 'success' : 'info'">
+                        <el-tag class="status-tag" :type="Number(row.status ?? 1) === 1 ? 'success' : 'info'">
                             {{ Number(row.status ?? 1) === 1 ? '启用' : '停用' }}
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="260" fixed="right">
+                <el-table-column label="操作" width="280" fixed="right">
                     <template #default="{ row }">
-                        <el-space>
-                            <el-button v-permission="'user:edit'" size="small" @click="handleEdit(row)">编辑</el-button>
-                            <el-button v-permission="'user:edit'" size="small" type="warning" plain @click="openResetDialog(row)">
+                        <div class="action-group">
+                            <el-button v-permission="'user:edit'" class="action-button" size="small" @click="handleEdit(row)">编辑</el-button>
+                            <el-button
+                                v-permission="'user:edit'"
+                                class="action-button"
+                                size="small"
+                                type="warning"
+                                plain
+                                @click="openResetDialog(row)"
+                            >
                                 重置密码
                             </el-button>
                             <el-popconfirm title="确认删除该用户吗？" @confirm="handleDelete(Number(row.id))">
                                 <template #reference>
-                                    <el-button v-permission="'user:edit'" size="small" type="danger" plain>删除</el-button>
+                                    <el-button v-permission="'user:edit'" class="action-button" size="small" type="danger" plain>删除</el-button>
                                 </template>
                             </el-popconfirm>
-                        </el-space>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
 
-            <div style="display: flex; justify-content: flex-end; margin-top: 18px">
+            <div class="user-pagination">
                 <el-pagination
                     background
                     layout="prev, pager, next, total"
@@ -63,7 +99,7 @@
                     @current-change="handlePageChange"
                 />
             </div>
-        </el-card>
+        </section>
 
         <el-dialog v-model="dialogVisible" :title="editingId ? '编辑用户' : '新增用户'" width="720px">
             <el-form :model="formModel" label-width="120px">
@@ -358,3 +394,34 @@ onMounted(async () => {
     await Promise.all([loadLaboratoryMap(), loadData()])
 })
 </script>
+
+<style scoped>
+.user-page {
+    display: grid;
+    gap: 20px;
+}
+
+.user-search {
+    width: 280px;
+}
+
+.user-table {
+    border: 1px solid rgba(21, 49, 59, 0.07);
+}
+
+.user-pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 22px;
+}
+
+@media (max-width: 900px) {
+    .user-search {
+        width: 100%;
+    }
+
+    .user-pagination {
+        justify-content: flex-start;
+    }
+}
+</style>

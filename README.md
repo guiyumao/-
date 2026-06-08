@@ -71,10 +71,21 @@ PowerShell 执行：
 - 后端：`http://127.0.0.1:8080/api`
 - Swagger：`http://127.0.0.1:8080/swagger-ui.html`
 
-## 默认测试账号
+## 管理员账号
 
-- 用户名：`admin`
-- 密码：`admin123`
+系统不再内置演示账号。首次部署时请通过环境变量创建初始化管理员：
+
+```env
+APP_INIT_ADMIN_ENABLED=true
+APP_INIT_ADMIN_USERNAME=admin
+APP_INIT_ADMIN_PASSWORD=请替换为强密码
+```
+
+后端启动后，如果该用户名不存在，会自动创建系统管理员并绑定 `sys_admin` 角色。首次登录后建议关闭初始化开关：
+
+```env
+APP_INIT_ADMIN_ENABLED=false
+```
 
 ## 手动启动
 
@@ -103,7 +114,7 @@ npm run dev -- --host=127.0.0.1 --port=5173
 - 数据库名：`lab_management_system`
 - 地址：`127.0.0.1:3306`
 - 用户名：`root`
-- 密码：`root123456`
+- 密码：以 `.env` 中 `DB_PASSWORD` / `MYSQL_ROOT_PASSWORD` 为准，生产环境必须替换为强密码。
 
 ### 初始化整库
 
@@ -111,7 +122,7 @@ npm run dev -- --host=127.0.0.1 --port=5173
 
 ```powershell
 docker cp .\lab_management_system.sql lab-management-mysql:/tmp/lab_management_system.sql
-docker exec lab-management-mysql sh -lc "mysql --default-character-set=utf8mb4 -uroot -proot123456 < /tmp/lab_management_system.sql"
+docker exec lab-management-mysql sh -lc "mysql --default-character-set=utf8mb4 -uroot -p$MYSQL_ROOT_PASSWORD < /tmp/lab_management_system.sql"
 ```
 
 ### 导入增量迁移
@@ -126,7 +137,16 @@ db/migration/V20260529_01_feature_enhancement.sql
 
 ```powershell
 docker cp .\db\migration\V20260529_01_feature_enhancement.sql lab-management-mysql:/tmp/V20260529_01_feature_enhancement.sql
-docker exec lab-management-mysql sh -lc "mysql --default-character-set=utf8mb4 -uroot -proot123456 lab_management_system < /tmp/V20260529_01_feature_enhancement.sql"
+docker exec lab-management-mysql sh -lc "mysql --default-character-set=utf8mb4 -uroot -p$MYSQL_ROOT_PASSWORD lab_management_system < /tmp/V20260529_01_feature_enhancement.sql"
+
+## 上线前检查
+
+- 复制 `.env.example` 为生产环境 `.env`，并替换所有 `change-me` 占位值。
+- 使用强随机值配置 `APP_JWT_SECRET`，不要使用开发环境示例值。
+- 配置真实域名到 `FRONTEND_PUBLIC_URL`、`BACKEND_PUBLIC_URL`、`VITE_API_BASE_URL` 和 `APP_CORS_ALLOWED_ORIGINS`。
+- 首次启动时启用 `APP_INIT_ADMIN_ENABLED=true` 创建管理员，创建后关闭该开关。
+- 初始化 SQL 只包含表结构、权限菜单和角色授权，业务数据默认为空。
+- 生产环境建议关闭 Swagger 或限制访问入口，并通过反向代理启用 HTTPS。
 ```
 
 该增量已包含：
@@ -135,22 +155,6 @@ docker exec lab-management-mysql sh -lc "mysql --default-character-set=utf8mb4 -
 - `sp_consumable_yearly_stats` 存储过程
 - `trg_after_borrow_return` 触发器
 - 库存预警、操作日志、到期提醒相关菜单与权限种子
-
-## 编译验证
-
-后端编译：
-
-```powershell
-cd .\backend
-.\mvnw.cmd -q -DskipTests compile
-```
-
-前端构建：
-
-```powershell
-cd .\frontend
-npm run build
-```
 
 ## 项目文档
 
@@ -162,4 +166,3 @@ npm run build
 - 启动前请先确认 Docker Desktop 已运行
 - 首次启动后端时 Maven 可能需要下载依赖
 - 首次启动前端前请确认已执行 `npm install`
-- 前端构建可能出现第三方依赖的 warning，不影响当前产物生成

@@ -41,7 +41,9 @@
                         <el-table-column prop="roleCode" label="角色编码" min-width="160" />
                         <el-table-column label="操作" width="100">
                             <template #default="{ row }">
-                                <el-button v-permission="'role:edit'" size="small" @click.stop="openRoleDialog(row)">编辑</el-button>
+                                <el-button v-permission="'role:edit'" size="small" @click.stop="openRoleDialog(row)">
+                                    编辑
+                                </el-button>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -90,7 +92,11 @@
                     <el-input v-model="form.roleName" placeholder="请输入角色名称" />
                 </el-form-item>
                 <el-form-item label="角色编码" prop="roleCode">
-                    <el-input v-model="form.roleCode" :disabled="Boolean(editingRoleId)" placeholder="请输入角色编码" />
+                    <el-input
+                        v-model="form.roleCode"
+                        :disabled="Boolean(editingRoleId)"
+                        placeholder="请输入角色编码"
+                    />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -106,6 +112,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, type ElTree, type FormInstance, type FormRules } from 'element-plus'
+import { roleLabels } from '../../constants/roles'
 import {
     assignRoleMenus,
     createRole,
@@ -116,18 +123,6 @@ import {
     type RoleItem,
 } from '../../api/modules/role'
 import type { MenuTreeItem } from '../../types/auth'
-
-const roleNameMap: Record<string, string> = {
-    sys_admin: '系统管理员',
-    lab_director: '实验室主任',
-    equipment_admin: '设备管理员',
-    consumable_admin: '耗材管理员',
-    hazardous_admin: '危化品管理员',
-    teacher: '教师',
-    student: '学生',
-    repair_staff: '维修人员',
-    calibration_staff: '校准人员',
-}
 
 const loadingRoles = ref(false)
 const saving = ref(false)
@@ -161,7 +156,7 @@ const selectedRoleLabel = computed(() => {
 })
 
 function getRoleDisplayName(role: RoleItem) {
-    return roleNameMap[role.roleCode] || role.roleName || role.roleCode
+    return roleLabels[role.roleCode] || role.roleName || role.roleCode
 }
 
 async function loadRoles() {

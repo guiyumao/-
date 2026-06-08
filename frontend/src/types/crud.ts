@@ -26,15 +26,29 @@ export interface CrudOption {
     value: string | number
 }
 
+export interface CrudCardRelationConfig {
+    endpoint: string
+    foreignKey: string
+    title: string
+    itemCodeProp: string
+    itemNameProp: string
+    itemMetaProps?: string[]
+    pageSize?: number
+    emptyText?: string
+}
+
 export interface CrudModuleConfig<T extends Record<string, unknown>> {
     title: string
     subtitle: string
     endpoint: string
     columns: CrudColumn[]
+    layout?: 'table' | 'cards'
+    cardRelation?: CrudCardRelationConfig
     emptyRecord: () => T
     createPermission?: string
     editPermission?: string
     deletePermission?: string
     createText?: string
     displayMappings?: Record<string, Record<string, string>>
+    syncKeys?: string[]
 }

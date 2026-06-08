@@ -1,8 +1,38 @@
 import type { AuthContextResponse, LoginResponse, UserProfile } from '../../types/auth'
 import { getResult, postResult } from '../http'
 
+export interface RegisterRequest {
+    laboratoryId: number
+    username: string
+    password: string
+    realName: string
+    userNo: string
+    phone?: string
+    email?: string
+    registerType: 'teacher' | 'student'
+}
+
+export interface RegisterResponse {
+    userId: number
+    username: string
+    realName: string
+    roleCode: string
+    message: string
+}
+
+export interface PublicLaboratoryOption {
+    id: number
+    laboratoryCode: string
+    laboratoryName: string
+    location?: string
+}
+
 export function login(username: string, password: string) {
     return postResult<LoginResponse>('/auth/login', { username, password })
+}
+
+export function register(data: RegisterRequest) {
+    return postResult<RegisterResponse>('/auth/register', data)
 }
 
 export function getCurrentUser() {
@@ -11,4 +41,8 @@ export function getCurrentUser() {
 
 export function getAuthContext() {
     return getResult<AuthContextResponse>('/auth/context')
+}
+
+export function getPublicLaboratories() {
+    return getResult<PublicLaboratoryOption[]>('/laboratories/public-options')
 }

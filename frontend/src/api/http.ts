@@ -1,16 +1,17 @@
 import axios from 'axios'
+import { appConfig } from '../config/app'
 import type { ApiResult } from '../types/crud'
 import { clearToken, getToken } from '../utils/token'
 
 const http = axios.create({
-    baseURL: 'http://127.0.0.1:8080/api',
+    baseURL: appConfig.apiBaseUrl,
     timeout: 10000,
 })
 
 http.interceptors.request.use((config) => {
     const token = getToken()
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`
+        config.headers.Authorization = `${appConfig.authHeaderPrefix} ${token}`
     }
     return config
 })

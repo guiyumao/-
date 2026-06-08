@@ -1,5 +1,5 @@
 import { createOne, fetchPage, fetchOne } from '../crud'
-import { getResult, putResult } from '../http'
+import { getResult, postResult, putResult } from '../http'
 
 export interface SelectOption {
     id: number
@@ -189,6 +189,17 @@ export async function createEquipmentBorrow(data: Partial<EquipmentBorrowRecord>
 
 export async function returnEquipmentBorrow(id: number, data: { returnCondition: string; remarks?: string }) {
     return putResult<boolean>(`/equipment-borrows/${id}/return`, data)
+}
+
+export async function updateEquipmentBorrowStatus(
+    id: number,
+    data: { borrowStatus: number; returnCondition?: string; remarks?: string },
+) {
+    return putResult<EquipmentBorrowRecord>(`/equipment-borrows/${id}/status`, data)
+}
+
+export async function sendEquipmentBorrowOverdueReminder(id: number, data: { message?: string }) {
+    return postResult<boolean>(`/equipment-borrows/${id}/overdue-reminder`, data)
 }
 
 export async function fetchConsumableInbounds(params: Record<string, unknown>) {

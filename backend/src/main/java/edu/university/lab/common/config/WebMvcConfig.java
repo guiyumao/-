@@ -1,6 +1,7 @@
 package edu.university.lab.common.config;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     }
 
     public void setAllowedOrigins(List<String> allowedOrigins) {
-        this.allowedOrigins = allowedOrigins;
+        this.allowedOrigins = allowedOrigins == null
+            ? new ArrayList<>()
+            : allowedOrigins.stream()
+                .flatMap(origin -> Arrays.stream(origin.split(",")))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
     }
 }
