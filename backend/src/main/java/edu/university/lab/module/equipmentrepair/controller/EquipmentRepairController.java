@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,5 +46,12 @@ public class EquipmentRepairController {
     @PutMapping("/{id}/status")
     public ApiResponse<EquipmentRepair> updateStatus(@PathVariable Integer id, @RequestBody EquipmentRepair request) {
         return ApiResponse.success(equipmentRepairService.updateStatus(id, request));
+    }
+
+    @Operation(summary = "删除设备维修记录")
+    @PreAuthorize("hasAuthority('equipment_repair:edit')")
+    @DeleteMapping("/{id}")
+    public ApiResponse<Boolean> delete(@PathVariable Integer id) {
+        return ApiResponse.success(equipmentRepairService.removeById(id));
     }
 }

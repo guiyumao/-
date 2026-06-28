@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,5 +46,12 @@ public class EquipmentCalibrationController {
     @PutMapping("/{id}/confirm")
     public ApiResponse<EquipmentCalibration> confirm(@PathVariable Integer id, @RequestBody EquipmentCalibration request) {
         return ApiResponse.success(equipmentCalibrationService.confirmCalibration(id, request));
+    }
+
+    @Operation(summary = "删除设备校准记录")
+    @PreAuthorize("hasAuthority('equipment_calibration:edit')")
+    @DeleteMapping("/{id}")
+    public ApiResponse<Boolean> delete(@PathVariable Integer id) {
+        return ApiResponse.success(equipmentCalibrationService.removeById(id));
     }
 }

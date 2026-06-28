@@ -1,4 +1,4 @@
-import { createOne, fetchPage, fetchOne } from '../crud'
+import { createOne, deleteOne, fetchPage, fetchOne } from '../crud'
 import { getResult, postResult, putResult } from '../http'
 
 export interface SelectOption {
@@ -191,6 +191,10 @@ export async function createEquipmentBorrow(data: Partial<EquipmentBorrowRecord>
     return createOne('/equipment-borrows', data)
 }
 
+export async function deleteEquipmentBorrow(id: number) {
+    return deleteOne('/equipment-borrows', id)
+}
+
 export async function returnEquipmentBorrow(id: number, data: { returnCondition: string; remarks?: string }) {
     return putResult<boolean>(`/equipment-borrows/${id}/return`, data)
 }
@@ -222,12 +226,20 @@ export async function createConsumableOutbound(data: Partial<ConsumableOutboundR
     return createOne('/consumable-outbounds', data)
 }
 
+export async function deleteConsumableOutbound(id: number) {
+    return deleteOne('/consumable-outbounds', id)
+}
+
 export async function fetchHazardousUsages(params: Record<string, unknown>) {
     return fetchPage<HazardousUsageRecord>('/hazardous-usages', params)
 }
 
 export async function createHazardousUsage(data: Partial<HazardousUsageRecord>) {
     return createOne('/hazardous-usages', data)
+}
+
+export async function deleteHazardousUsage(id: number) {
+    return deleteOne('/hazardous-usages', id)
 }
 
 export async function fetchBorrowDetail(id: number) {
@@ -254,6 +266,14 @@ export async function createEquipmentCalibration(data: Partial<EquipmentCalibrat
     return createOne('/equipment-calibrations', data)
 }
 
+export async function deleteEquipmentCalibration(id: number) {
+    return deleteOne('/equipment-calibrations', id)
+}
+
 export async function confirmEquipmentCalibration(id: number, data: Partial<EquipmentCalibrationRecord>) {
     return putResult<EquipmentCalibrationRecord>(`/equipment-calibrations/${id}/confirm`, data)
+}
+
+export async function deleteEquipmentRepair(id: number) {
+    return deleteOne('/equipment-repairs', id)
 }
