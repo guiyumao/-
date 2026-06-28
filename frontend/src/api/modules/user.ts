@@ -10,6 +10,7 @@ export interface CreateUserRequest {
     email: string
     userType: number
     status: number
+    roleIds: number[]
 }
 
 export interface UpdateUserRequest {
@@ -21,6 +22,7 @@ export interface UpdateUserRequest {
     email: string
     userType: number
     status: number
+    roleIds: number[]
 }
 
 export function createUser(data: CreateUserRequest) {

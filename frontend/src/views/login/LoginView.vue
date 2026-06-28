@@ -5,45 +5,38 @@
 
         <div class="login-card card-panel">
             <section class="login-story">
-                <div class="eyebrow">Laboratory Resource Hub</div>
-                <h1>把实验室的日常流转整理成更清晰的操作界面</h1>
-                <p class="story-copy">
-                    从设备借还、耗材出入库到危化品使用登记与提醒报表，这里把高频工作收在一个更稳定、
-                    更有秩序的后台里。
-                </p>
+                <div class="eyebrow">{{ loginContent.platformEyebrow }}</div>
+                <h1>{{ loginContent.title }}</h1>
+                <p class="story-copy">{{ loginContent.description }}</p>
 
                 <div class="story-grid">
-                    <article class="story-panel">
-                        <div class="story-panel-title">管理主线</div>
-                        <div class="story-panel-value">设备 / 耗材 / 安全</div>
-                        <p>三条主线共用同一套权限、记录与提醒逻辑，避免数据分散。</p>
-                    </article>
-                    <article class="story-panel">
-                        <div class="story-panel-title">面向角色</div>
-                        <div class="story-panel-value">管理员 / 教师 / 实验员</div>
-                        <p>适合实验室常见协作分工，重点信息在首页和导航里直接可见。</p>
+                    <article v-for="item in loginContent.highlights" :key="item.title" class="story-panel">
+                        <div class="story-panel-title">{{ item.title }}</div>
+                        <div class="story-panel-value">{{ item.value }}</div>
+                        <p>{{ item.description }}</p>
                     </article>
                 </div>
 
                 <ul class="story-list">
-                    <li>统一资产台账，减少重复录入和口径不一致。</li>
-                    <li>重点提醒前置呈现，让校准、临期和库存风险更早暴露。</li>
-                    <li>借还、维修、报表与审计串起来，方便复盘与追踪。</li>
+                    <li v-for="item in loginContent.valuePoints" :key="item">{{ item }}</li>
                 </ul>
+
+                <section class="story-usecases">
+                    <div class="story-usecases-title">{{ loginContent.roleGuideTitle }}</div>
+                    <p class="story-usecases-copy">{{ loginContent.roleGuideDescription }}</p>
+                </section>
             </section>
 
             <section class="login-form-panel">
                 <div class="form-head">
                     <div class="form-head-copy">
-                        <div class="eyebrow">{{ mode === 'login' ? 'Sign In' : 'Register' }}</div>
-                        <h2>{{ mode === 'login' ? '进入系统' : '创建账号' }}</h2>
+                        <div class="eyebrow">{{ mode === 'login' ? loginContent.loginModeEyebrow : loginContent.registerModeEyebrow }}</div>
+                        <h2>{{ mode === 'login' ? loginContent.loginHeading : loginContent.registerHeading }}</h2>
                         <p>
-                            {{ mode === 'login'
-                                ? '使用账号登录，继续处理今天的实验室事务。'
-                                : '填写基础信息，创建一个教师或学生账号。' }}
+                            {{ mode === 'login' ? loginContent.loginDescription : loginContent.registerDescription }}
                         </p>
                     </div>
-                    <div class="form-badge">安全会话</div>
+                    <div class="form-badge">{{ loginContent.formBadge }}</div>
                 </div>
 
                 <div class="mode-switch">
@@ -62,15 +55,48 @@
                     <el-form-item label="用户名" prop="username">
                         <el-input v-model="loginForm.username" placeholder="请输入用户名" />
                     </el-form-item>
+
+                    <el-form-item label="登录角色" prop="roleCode">
+                        <div class="role-selector-panel">
+                            <div v-if="roleLoading" class="role-card-empty">正在加载可选角色…</div>
+
+                            <div v-else-if="!roleOptions.length" class="role-card-empty">
+                                当前暂无可登录角色，请联系管理员检查角色配置。
+                            </div>
+
+                            <template v-else>
+                                <div class="role-switch" role="tablist" aria-label="登录角色">
+                                    <button
+                                        v-for="item in roleOptions"
+                                        :key="item.roleCode"
+                                        type="button"
+                                        class="role-switch-button"
+                                        :class="{ active: loginForm.roleCode === item.roleCode }"
+                                        :aria-pressed="loginForm.roleCode === item.roleCode"
+                                        @click="selectRole(item.roleCode)"
+                                    >
+                                        {{ roleLabel(item) }}
+                                    </button>
+                                </div>
+
+                                <div v-if="selectedRole" class="role-selected-summary">
+                                    <div class="role-selected-title">
+                                        <span>{{ roleLabel(selectedRole) }}</span>
+                                        <span class="role-selected-code">{{ selectedRole.roleCode }}</span>
+                                    </div>
+                                    <p>{{ roleDescription(selectedRole) }}</p>
+                                </div>
+                            </template>
+                        </div>
+                    </el-form-item>
+
                     <el-form-item label="密码" prop="password">
                         <el-input v-model="loginForm.password" type="password" show-password placeholder="请输入密码" />
                     </el-form-item>
 
                     <div class="login-actions">
-                        <el-button type="primary" size="large" :loading="loginLoading" @click="handleLogin">
-                            登录系统
-                        </el-button>
-                        <div class="login-tip">请使用管理员分配的账号登录。首次部署请通过环境变量初始化管理员账号。</div>
+                        <el-button type="primary" size="large" :loading="loginLoading" @click="handleLogin">登录系统</el-button>
+                        <div class="login-tip">登录后会自动切换到当前角色可见的菜单。</div>
                     </div>
                 </el-form>
 
@@ -133,10 +159,8 @@
                     </div>
 
                     <div class="login-actions">
-                        <el-button type="primary" size="large" :loading="registerLoading" @click="handleRegister">
-                            创建账号
-                        </el-button>
-                        <div class="login-tip">注册成功后将返回登录页，并自动填入新账号。</div>
+                        <el-button type="primary" size="large" :loading="registerLoading" @click="handleRegister">创建账号</el-button>
+                        <div class="login-tip">注册成功后会自动回到登录页，并预填新账号信息。</div>
                     </div>
                 </el-form>
             </section>
@@ -145,11 +169,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { getPublicLaboratories, register, type PublicLaboratoryOption } from '../../api/modules/auth'
+import { getAvailableRoles, getPublicLaboratories, register, type PublicLaboratoryOption } from '../../api/modules/auth'
+import { loginContent } from '../../content/loginContent'
+import { roleLabels } from '../../constants/roles'
 import { useAuthStore } from '../../stores/auth'
+import type { AvailableRole } from '../../types/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -159,10 +186,14 @@ const loginFormRef = ref<FormInstance>()
 const registerFormRef = ref<FormInstance>()
 const loginLoading = ref(false)
 const registerLoading = ref(false)
+const roleLoading = ref(false)
 const laboratoryOptions = ref<PublicLaboratoryOption[]>([])
+const roleOptions = ref<AvailableRole[]>([])
+const selectedRole = computed(() => roleOptions.value.find((item) => item.roleCode === loginForm.roleCode))
 
 const loginForm = reactive({
     username: '',
+    roleCode: '',
     password: '',
 })
 
@@ -180,6 +211,7 @@ const registerForm = reactive({
 
 const loginRules: FormRules = {
     username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+    roleCode: [{ required: true, message: '请选择登录角色', trigger: 'change' }],
     password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
@@ -206,13 +238,34 @@ const registerRules: FormRules = {
     realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
     userNo: [{ required: true, message: '请输入工号或学号', trigger: 'blur' }],
     registerType: [{ required: true, message: '请选择账号类型', trigger: 'change' }],
-    email: [
-        {
-            type: 'email',
-            message: '请输入正确的邮箱格式',
-            trigger: 'blur',
-        },
-    ],
+    email: [{ type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }],
+}
+
+function roleLabel(role: AvailableRole) {
+    return roleLabels[role.roleCode] || role.roleName || role.roleCode
+}
+
+function roleDescription(role: AvailableRole) {
+    const description = role.description?.trim()
+    if (!description || /^[?\uff1f\s]+$/.test(description)) {
+        return defaultRoleDescription(role.roleCode)
+    }
+    return description
+}
+
+function defaultRoleDescription(roleCode: string) {
+    const descriptions: Record<string, string> = {
+        sys_admin: '管理用户、角色、菜单和系统配置。',
+        lab_director: '统筹实验室资源、审批流程和安全管理。',
+        equipment_admin: '处理设备台账、借还、维修与校准流程。',
+        consumable_admin: '管理耗材台账、入库、出库和库存预警。',
+        hazardous_admin: '跟踪危化品存放、领用、归还与处置。',
+        teacher: '以教师身份发起借用、申请和业务查询。',
+        student: '以学生身份在授权范围内进行借用与申请。',
+        repair_staff: '专注设备报修、维修处理和结果回写。',
+        calibration_staff: '专注校准任务、证书登记和到期维护。',
+    }
+    return descriptions[roleCode] || '选择该身份后进入对应的业务与权限视图。'
 }
 
 function switchToRegister() {
@@ -227,6 +280,26 @@ async function loadLaboratories() {
     laboratoryOptions.value = result.data
 }
 
+async function loadAvailableRoles() {
+    roleLoading.value = true
+    try {
+        const result = await getAvailableRoles('')
+        roleOptions.value = result.data.filter((item) => item.status === 1)
+        if (!loginForm.roleCode && roleOptions.value.length === 1) {
+            loginForm.roleCode = roleOptions.value[0].roleCode
+        }
+    } catch {
+        roleOptions.value = []
+    } finally {
+        roleLoading.value = false
+    }
+}
+
+function selectRole(roleCode: string) {
+    loginForm.roleCode = roleCode
+    loginFormRef.value?.validateField('roleCode').catch(() => false)
+}
+
 async function handleLogin() {
     const valid = await loginFormRef.value?.validate().catch(() => false)
     if (!valid) {
@@ -234,9 +307,12 @@ async function handleLogin() {
     }
     loginLoading.value = true
     try {
-        await authStore.login(loginForm.username, loginForm.password)
+        await authStore.login(loginForm.username, loginForm.password, loginForm.roleCode)
         ElMessage.success('登录成功')
         router.push('/dashboard')
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '登录失败，请检查账号、角色和密码'
+        ElMessage.error(message)
     } finally {
         loginLoading.value = false
     }
@@ -263,9 +339,22 @@ async function handleRegister() {
 
         loginForm.username = result.data.username
         loginForm.password = registerForm.password
+        loginForm.roleCode = result.data.roleCode
+        roleOptions.value = [
+            {
+                id: 0,
+                roleCode: result.data.roleCode,
+                roleName: roleLabels[result.data.roleCode] || result.data.roleCode,
+                description: '',
+                status: 1,
+            },
+        ]
         mode.value = 'login'
         registerFormRef.value?.resetFields()
         ElMessage.success('注册成功，请登录')
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '注册失败，请稍后重试'
+        ElMessage.error(message)
     } finally {
         registerLoading.value = false
     }
@@ -273,6 +362,7 @@ async function handleRegister() {
 
 onMounted(() => {
     void loadLaboratories()
+    void loadAvailableRoles()
 })
 </script>
 
@@ -288,24 +378,24 @@ onMounted(() => {
 
 .login-aurora {
     position: absolute;
-    width: 460px;
-    height: 460px;
+    width: 520px;
+    height: 520px;
     border-radius: 999px;
-    filter: blur(16px);
-    opacity: 0.7;
+    filter: blur(18px);
+    opacity: 0.72;
     pointer-events: none;
 }
 
 .login-aurora-left {
-    top: -80px;
-    left: -120px;
-    background: radial-gradient(circle, rgba(18, 127, 114, 0.34), transparent 68%);
+    top: -100px;
+    left: -140px;
+    background: radial-gradient(circle, rgba(86, 200, 182, 0.34), transparent 68%);
 }
 
 .login-aurora-right {
-    right: -80px;
-    bottom: -140px;
-    background: radial-gradient(circle, rgba(212, 161, 76, 0.3), transparent 66%);
+    right: -100px;
+    bottom: -160px;
+    background: radial-gradient(circle, rgba(240, 190, 103, 0.3), transparent 66%);
 }
 
 .login-card {
@@ -315,6 +405,7 @@ onMounted(() => {
     grid-template-columns: minmax(0, 1.2fr) minmax(420px, 0.9fr);
     gap: 26px;
     padding: 26px;
+    background: linear-gradient(180deg, rgba(11, 18, 28, 0.92), rgba(8, 14, 22, 0.98));
 }
 
 .login-story {
@@ -347,8 +438,8 @@ onMounted(() => {
 .story-panel {
     padding: 18px 18px 16px;
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.54);
-    border: 1px solid rgba(21, 49, 59, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line-soft);
 }
 
 .story-panel-title {
@@ -397,11 +488,29 @@ onMounted(() => {
     background: linear-gradient(135deg, var(--accent), var(--accent-gold));
 }
 
+.story-usecases {
+    margin-top: 28px;
+}
+
+.story-usecases-title {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.story-usecases-copy {
+    margin: 12px 0 0;
+    max-width: 560px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
 .login-form-panel {
     padding: 18px;
     border-radius: 26px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(251, 246, 238, 0.96));
-    border: 1px solid rgba(21, 49, 59, 0.08);
+    background: linear-gradient(180deg, rgba(15, 24, 37, 0.96), rgba(10, 17, 27, 0.98));
+    border: 1px solid var(--line-soft);
 }
 
 .form-head {
@@ -430,8 +539,8 @@ onMounted(() => {
     justify-content: center;
     padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(18, 127, 114, 0.1);
-    color: var(--accent-deep);
+    background: rgba(86, 200, 182, 0.12);
+    color: var(--accent);
     font-size: 13px;
     font-weight: 700;
 }
@@ -444,7 +553,7 @@ onMounted(() => {
     padding: 6px;
     margin-bottom: 22px;
     border-radius: 999px;
-    background: rgba(18, 127, 114, 0.08);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .mode-button {
@@ -459,9 +568,9 @@ onMounted(() => {
 }
 
 .mode-button.active {
-    background: white;
-    color: var(--accent-deep);
-    box-shadow: 0 8px 18px rgba(18, 34, 40, 0.08);
+    background: rgba(255, 255, 255, 0.96);
+    color: #08111a;
+    box-shadow: 0 8px 18px rgba(18, 34, 40, 0.16);
 }
 
 .login-form :deep(.el-form-item__label) {
@@ -473,6 +582,90 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+}
+
+.role-selector-panel {
+    display: grid;
+    gap: 12px;
+}
+
+.role-card-empty {
+    display: grid;
+    place-items: center;
+    min-height: 92px;
+    padding: 18px 16px;
+    border-radius: 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.role-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.role-switch-button {
+    border: 0;
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.role-switch-button.active {
+    background: rgba(255, 255, 255, 0.96);
+    color: #08111a;
+    box-shadow: 0 8px 18px rgba(18, 34, 40, 0.16);
+}
+
+.role-selected-summary {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(86, 200, 182, 0.1), rgba(240, 190, 103, 0.12));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.role-selected-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.role-selected-code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.role-selected-summary p {
+    margin: 10px 0 0;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 13px;
 }
 
 .login-actions {
@@ -518,6 +711,11 @@ onMounted(() => {
     }
 
     .form-head {
+        flex-direction: column;
+    }
+
+    .role-selected-title {
+        align-items: flex-start;
         flex-direction: column;
     }
 }

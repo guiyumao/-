@@ -2,17 +2,21 @@
     <div>
         <div class="page-header">
             <div>
-                <h2 class="page-title">设备借用流程</h2>
-                <p class="page-subtitle">先登记借用，借出期间跟踪是否逾期，归还时记录设备情况；逾期记录可直接向借用账号发送催还通知。</p>
+                <h2 class="page-title">设备借用协同</h2>
+                <p class="page-subtitle">
+                    把申请人、审批人、归还检查人、提醒对象和异常维修串成一条链，避免借用流程与后续处理相互割裂。
+                </p>
             </div>
             <el-space>
-                <el-button @click="loadRecords">刷新</el-button>
-                <el-button v-if="authStore.hasPermission('equipment_borrow:edit')" type="primary" @click="openCreateDialog">新增借用</el-button>
+                <el-button @click="loadAll">刷新</el-button>
+                <el-button v-if="authStore.hasPermission('equipment_borrow:edit')" type="primary" @click="openCreateDialog">
+                    新增借用
+                </el-button>
             </el-space>
         </div>
 
-        <div class="borrow-flow">
-            <div v-for="step in workflowSteps" :key="step.title" class="flow-step">
+        <div class="flow-overview">
+            <div v-for="step in workflowSteps" :key="step.title" class="flow-card">
                 <span class="flow-index">{{ step.index }}</span>
                 <div>
                     <strong>{{ step.title }}</strong>
@@ -21,29 +25,65 @@
             </div>
         </div>
 
-        <el-row :gutter="20" style="margin-bottom: 20px">
-            <el-col :span="8">
-                <el-card class="card-panel" shadow="never">
-                    <el-statistic title="当前借出" :value="borrowedCount" />
+        <el-row :gutter="20" class="stats-row">
+            <el-col :xs="24" :md="8">
+                <el-card class="card-panel metric-card" shadow="never">
+                    <div class="metric-label">当前借用中</div>
+                    <div class="metric-value">{{ borrowedCount }}</div>
+                    <div class="metric-note">需要继续跟踪归还时间</div>
                 </el-card>
             </el-col>
-            <el-col :span="8">
-                <el-card class="card-panel" shadow="never">
-                    <el-statistic title="已归还记录" :value="returnedCount" />
+            <el-col :xs="24" :md="8">
+                <el-card class="card-panel metric-card" shadow="never">
+                    <div class="metric-label">已逾期</div>
+                    <div class="metric-value danger">{{ overdueCount }}</div>
+                    <div class="metric-note">提醒页会同步显示待催还对象</div>
                 </el-card>
             </el-col>
-            <el-col :span="8">
-                <el-card class="card-panel" shadow="never">
-                    <el-statistic title="逾期记录" :value="overdueCount" />
+            <el-col :xs="24" :md="8">
+                <el-card class="card-panel metric-card" shadow="never">
+                    <div class="metric-label">归还后转维修</div>
+                    <div class="metric-value">{{ repairLinkedCount }}</div>
+                    <div class="metric-note">根据设备编码自动匹配维修记录</div>
                 </el-card>
             </el-col>
         </el-row>
 
+        <div class="sample-showcase">
+            <div class="sample-section-head">
+                <div>
+                    <h3 class="section-title">申请样例直观展示</h3>
+                    <p class="section-desc">以下样例直接来自当前借用记录，用来对照教师与学生申请链路，不额外手工编造数据。</p>
+                </div>
+                <span class="sample-tip">来源：设备借用记录 + 用户账号标识 + 审批与联动结果</span>
+            </div>
+            <div class="sample-grid">
+                <div class="sample-card teacher" v-if="teacherSample">
+                    <div class="sample-badge">教师申请样例</div>
+                    <div class="sample-title">{{ userName(teacherSample.borrowerUserId) }}申请 {{ equipmentName(teacherSample.equipmentId) }}</div>
+                    <p class="sample-line">用途：{{ teacherSample.purpose }}</p>
+                    <p class="sample-line">审批：{{ userName(teacherSample.approverUserId) }}</p>
+                    <p class="sample-line">时间：{{ formatDateTime(teacherSample.borrowDate) }} 至 {{ formatDateTime(teacherSample.dueDate) }}</p>
+                    <p class="sample-line">来源：{{ borrowSourceText(teacherSample) }}</p>
+                    <p class="sample-line">协同结果：{{ borrowActionHint(teacherSample) }}</p>
+                </div>
+                <div class="sample-card student" v-if="studentSample">
+                    <div class="sample-badge">学生申请样例</div>
+                    <div class="sample-title">{{ userName(studentSample.borrowerUserId) }}申请 {{ equipmentName(studentSample.equipmentId) }}</div>
+                    <p class="sample-line">用途：{{ studentSample.purpose }}</p>
+                    <p class="sample-line">审批：{{ userName(studentSample.approverUserId) }}</p>
+                    <p class="sample-line">时间：{{ formatDateTime(studentSample.borrowDate) }} 至 {{ formatDateTime(studentSample.dueDate) }}</p>
+                    <p class="sample-line">来源：{{ borrowSourceText(studentSample) }}</p>
+                    <p class="sample-line">协同结果：{{ borrowActionHint(studentSample) }}</p>
+                </div>
+            </div>
+        </div>
+
         <el-card class="card-panel" shadow="never">
-            <div class="table-head">
-                <div class="table-head-title">
-                    <h3>借用记录</h3>
-                    <p>{{ recordsSummaryText }}</p>
+            <div class="toolbar">
+                <div>
+                    <h3 class="section-title">借用协同记录</h3>
+                    <p class="section-desc">{{ recordsSummaryText }}</p>
                 </div>
                 <el-radio-group v-model="statusFilter" class="status-filter">
                     <el-radio-button v-for="item in statusFilterOptions" :key="item.value" :label="item.value">
@@ -52,64 +92,106 @@
                 </el-radio-group>
             </div>
 
-            <el-table v-loading="loading" :data="filteredRecords" style="width: 100%">
-                <el-table-column label="设备" min-width="160">
-                    <template #default="{ row }">
-                        {{ equipmentMap[String(row.equipmentId)] || row.equipmentId }}
-                    </template>
-                </el-table-column>
-                <el-table-column label="实验室" min-width="140">
-                    <template #default="{ row }">
-                        {{ laboratoryMap[String(row.laboratoryId)] || row.laboratoryId }}
-                    </template>
-                </el-table-column>
-                <el-table-column label="借用人" min-width="140">
-                    <template #default="{ row }">
-                        {{ userMap[String(row.borrowerUserId)] || row.borrowerUserId }}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="purpose" label="借用用途" min-width="220" show-overflow-tooltip />
-                <el-table-column label="借用时间" min-width="160">
-                    <template #default="{ row }">{{ formatDateTime(row.borrowDate) }}</template>
-                </el-table-column>
-                <el-table-column label="应还时间" min-width="160">
-                    <template #default="{ row }">{{ formatDateTime(row.dueDate) }}</template>
-                </el-table-column>
-                <el-table-column label="状态" min-width="120">
-                    <template #default="{ row }">
-                        <el-tag :type="borrowStatusType(row.borrowStatus)">{{ borrowStatusText(row.borrowStatus) }}</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column label="处理建议" min-width="190">
-                    <template #default="{ row }">
-                        <span :class="['action-hint', { urgent: row.borrowStatus === 4 }]">{{ borrowActionHint(row) }}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column label="操作" width="280" fixed="right">
-                    <template #default="{ row }">
+            <div class="record-grid">
+                <el-card v-for="record in filteredRecords" :key="record.id" class="borrow-card" shadow="never">
+                    <div class="borrow-card-head">
+                        <div>
+                            <div class="record-title">
+                                {{ equipmentName(record.equipmentId) }}
+                                <el-tag :type="borrowStatusType(record.borrowStatus)" effect="light">
+                                    {{ borrowStatusText(record.borrowStatus) }}
+                                </el-tag>
+                            </div>
+                            <p class="record-subtitle">
+                                {{ laboratoryName(record.laboratoryId) }} · 申请用途：{{ record.purpose }}
+                            </p>
+                        </div>
+                        <div class="next-owner">
+                            <span class="next-label">下一步</span>
+                            <strong>{{ borrowNextActor(record) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="chain-row">
+                        <div class="chain-node">
+                            <span class="chain-label">申请人</span>
+                            <strong>{{ userName(record.borrowerUserId) }}</strong>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="chain-node">
+                            <span class="chain-label">审批人</span>
+                            <strong>{{ userName(record.approverUserId) }}</strong>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="chain-node">
+                            <span class="chain-label">归还核验</span>
+                            <strong>{{ returnVerifierText(record) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="detail-panels">
+                        <div class="detail-block">
+                            <div class="detail-block-title">时间链路</div>
+                            <p>借用时间：{{ formatDateTime(record.borrowDate) }}</p>
+                            <p>应还时间：{{ formatDateTime(record.dueDate) }}</p>
+                            <p>实际归还：{{ formatDateTime(record.actualReturnDate) }}</p>
+                        </div>
+                        <div class="detail-block">
+                            <div class="detail-block-title">来源与依据</div>
+                            <p>{{ borrowSourceText(record) }}</p>
+                            <p v-if="record.returnCondition">归还检查：{{ record.returnCondition }}</p>
+                            <p v-if="record.remarks">备注来源：{{ record.remarks }}</p>
+                        </div>
+                    </div>
+
+                    <div class="link-panels">
+                        <div class="link-card">
+                            <div class="link-title">维修联动</div>
+                            <template v-if="linkedRepair(record)">
+                                <p>报修人：{{ userName(linkedRepair(record)?.reporterUserId) }}</p>
+                                <p>维修人：{{ userName(linkedRepair(record)?.repairUserId) }}</p>
+                                <p>维修状态：{{ repairStatusText(linkedRepair(record)?.repairStatus) }}</p>
+                            </template>
+                            <p v-else>当前暂无维修记录，若归还检查异常可直接转入维修流程。</p>
+                        </div>
+                        <div class="link-card">
+                            <div class="link-title">校准联动</div>
+                            <template v-if="linkedCalibration(record)">
+                                <p>校准人员：{{ userName(linkedCalibration(record)?.calibrationUserId) }}</p>
+                                <p>有效期至：{{ formatDateTime(linkedCalibration(record)?.validUntil) }}</p>
+                                <p>校准状态：{{ calibrationStatusText(linkedCalibration(record)?.calibrationStatus) }}</p>
+                            </template>
+                            <p v-else>当前未关联校准记录，若设备即将到期会在提醒页中转给相关角色。</p>
+                        </div>
+                    </div>
+
+                    <div class="action-row">
+                        <span :class="['action-hint', { urgent: record.borrowStatus === 4 }]">
+                            {{ borrowActionHint(record) }}
+                        </span>
                         <el-space v-if="authStore.hasPermission('equipment_borrow:edit')" wrap>
-                            <el-button v-if="canReturn(row)" size="small" type="primary" plain @click="openReturnDialog(row)">
+                            <el-button v-if="canReturn(record)" size="small" type="primary" plain @click="openReturnDialog(record)">
                                 登记归还
                             </el-button>
-                            <el-button size="small" plain @click="openStatusDialog(row)">更新状态</el-button>
+                            <el-button size="small" plain @click="openStatusDialog(record)">更新状态</el-button>
                             <el-button
-                                v-if="row.borrowStatus === 4"
+                                v-if="record.borrowStatus === 4"
                                 size="small"
                                 type="danger"
                                 plain
-                                :loading="remindingId === row.id"
-                                @click="sendReminder(row)"
+                                :loading="remindingId === record.id"
+                                @click="sendReminder(record)"
                             >
-                                催还
+                                发送催还
                             </el-button>
                         </el-space>
-                        <span v-else style="color: var(--text-secondary)">无权限</span>
-                    </template>
-                </el-table-column>
-            </el-table>
+                    </div>
+                </el-card>
+            </div>
         </el-card>
 
-        <el-dialog v-model="createVisible" title="新增设备借用" width="760px">
+        <el-dialog v-model="createVisible" class="collab-dialog" title="新增设备借用" width="760px">
+            <p class="dialog-tip">借用会同时记录申请人、审批人和时间依据，方便后续催还、归还检查和维修追踪。</p>
             <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="140px">
                 <el-form-item label="实验室" prop="laboratoryId">
                     <el-select v-model="createForm.laboratoryId" placeholder="请选择实验室" style="width: 100%">
@@ -121,17 +203,17 @@
                         <el-option
                             v-for="item in equipmentOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="借用人" prop="borrowerUserId">
-                    <el-select v-model="createForm.borrowerUserId" filterable placeholder="请选择借用人" style="width: 100%">
+                <el-form-item label="申请人" prop="borrowerUserId">
+                    <el-select v-model="createForm.borrowerUserId" filterable placeholder="请选择申请人" style="width: 100%">
                         <el-option
                             v-for="item in userOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
@@ -141,7 +223,7 @@
                         <el-option
                             v-for="item in userOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
@@ -152,11 +234,18 @@
                 <el-form-item label="应还时间" prop="dueDate">
                     <el-date-picker v-model="createForm.dueDate" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
                 </el-form-item>
-                <el-form-item label="借用用途" prop="purpose">
+                <el-form-item label="申请用途" prop="purpose">
                     <el-input v-model="createForm.purpose" type="textarea" :rows="3" maxlength="255" show-word-limit />
                 </el-form-item>
-                <el-form-item label="备注">
-                    <el-input v-model="createForm.remarks" type="textarea" :rows="2" maxlength="255" show-word-limit />
+                <el-form-item label="来源说明">
+                    <el-input
+                        v-model="createForm.remarks"
+                        type="textarea"
+                        :rows="2"
+                        maxlength="255"
+                        placeholder="例如：来源于课程实验计划、导师安排或项目申请单"
+                        show-word-limit
+                    />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -167,17 +256,24 @@
             </template>
         </el-dialog>
 
-        <el-dialog v-model="returnVisible" class="return-dialog" title="设备归还登记" width="620px">
-            <p class="dialog-tip">确认归还会把这条借用记录改为“已归还”，并释放设备为可借用状态。</p>
+        <el-dialog v-model="returnVisible" class="collab-dialog" title="登记设备归还" width="620px">
+            <p class="dialog-tip">归还检查结果会作为是否转入维修流程的直接依据，请明确填写检查情况。</p>
             <el-form ref="returnFormRef" :model="returnForm" :rules="returnRules" label-width="140px">
                 <el-form-item label="借用记录">
                     <el-input :model-value="selectedBorrowText" disabled />
                 </el-form-item>
-                <el-form-item label="归还情况" prop="returnCondition">
-                    <el-input v-model="returnForm.returnCondition" placeholder="例如：完好归还 / 需维修检查" />
+                <el-form-item label="归还检查" prop="returnCondition">
+                    <el-input v-model="returnForm.returnCondition" placeholder="例如：设备完好、附件齐全；或发现损坏需转维修" />
                 </el-form-item>
-                <el-form-item label="备注">
-                    <el-input v-model="returnForm.remarks" type="textarea" :rows="3" maxlength="255" show-word-limit />
+                <el-form-item label="来源说明">
+                    <el-input
+                        v-model="returnForm.remarks"
+                        type="textarea"
+                        :rows="3"
+                        maxlength="255"
+                        placeholder="例如：由实验室主任现场核验，依据设备点检单登记"
+                        show-word-limit
+                    />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -188,26 +284,36 @@
             </template>
         </el-dialog>
 
-        <el-dialog v-model="statusVisible" class="return-dialog" title="编辑借用情况" width="620px">
-            <p class="dialog-tip">用于修正借用流转状态或补充情况说明；改为“已归还/已拒绝”会释放设备，改为“借出中/已逾期”会保持设备为借出。</p>
+        <el-dialog v-model="statusVisible" class="collab-dialog" title="更新借用状态" width="620px">
+            <p class="dialog-tip">适用于补录审批、逾期、拒绝和归还异常等场景，确保提醒、维修和统计口径保持一致。</p>
             <el-form ref="statusFormRef" :model="statusForm" :rules="statusRules" label-width="140px">
                 <el-form-item label="借用记录">
                     <el-input :model-value="selectedBorrowText" disabled />
                 </el-form-item>
                 <el-form-item label="借用状态" prop="borrowStatus">
                     <el-select v-model="statusForm.borrowStatus" placeholder="请选择状态" style="width: 100%">
-                        <el-option label="待审批" :value="1" />
-                        <el-option label="借出中" :value="2" />
+                        <el-option label="待处理" :value="1" />
+                        <el-option label="借用中" :value="2" />
                         <el-option label="已归还" :value="3" />
                         <el-option label="已逾期" :value="4" />
                         <el-option label="已拒绝" :value="5" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="情况说明">
-                    <el-input v-model="statusForm.returnCondition" placeholder="例如：设备完好 / 已联系借用人 / 等待维修确认" />
+                <el-form-item label="处理说明">
+                    <el-input
+                        v-model="statusForm.returnCondition"
+                        placeholder="例如：已联系申请人；归还后需送修；审批驳回原因"
+                    />
                 </el-form-item>
-                <el-form-item label="备注">
-                    <el-input v-model="statusForm.remarks" type="textarea" :rows="3" maxlength="255" show-word-limit />
+                <el-form-item label="来源说明">
+                    <el-input
+                        v-model="statusForm.remarks"
+                        type="textarea"
+                        :rows="3"
+                        maxlength="255"
+                        placeholder="例如：来源于电话催还、现场核验或审批记录"
+                        show-word-limit
+                    />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -227,18 +333,24 @@ import {
     createEquipmentBorrow,
     fetchBorrowDetail,
     fetchEquipmentBorrows,
+    fetchEquipmentCalibrations,
     fetchEquipmentOptions,
+    fetchEquipmentRepairs,
     fetchLaboratoryOptions,
     fetchUserOptions,
     optionsToMap,
     returnEquipmentBorrow,
     sendEquipmentBorrowOverdueReminder,
     type EquipmentBorrowRecord,
+    type EquipmentCalibrationRecord,
+    type EquipmentRepairRecord,
     type SelectOption,
     updateEquipmentBorrowStatus,
 } from '../../api/modules/business'
 import { borrowStatusText, borrowStatusType, formatDateTime } from './EquipmentBorrowBusinessHelpers'
 import { useAuthStore } from '../../stores/auth'
+
+const authStore = useAuthStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -250,6 +362,8 @@ const returnVisible = ref(false)
 const statusVisible = ref(false)
 const statusFilter = ref(0)
 const records = ref<EquipmentBorrowRecord[]>([])
+const repairRecords = ref<EquipmentRepairRecord[]>([])
+const calibrationRecords = ref<EquipmentCalibrationRecord[]>([])
 const laboratoryOptions = ref<SelectOption[]>([])
 const equipmentOptions = ref<SelectOption[]>([])
 const userOptions = ref<SelectOption[]>([])
@@ -260,7 +374,6 @@ const createFormRef = ref<FormInstance>()
 const returnFormRef = ref<FormInstance>()
 const statusFormRef = ref<FormInstance>()
 const currentBorrowId = ref<number>()
-const authStore = useAuthStore()
 
 const createForm = reactive({
     equipmentId: undefined as number | undefined,
@@ -287,7 +400,7 @@ const statusForm = reactive({
 const createRules: FormRules = {
     laboratoryId: [{ required: true, message: '请选择实验室', trigger: 'change' }],
     equipmentId: [{ required: true, message: '请选择设备', trigger: 'change' }],
-    borrowerUserId: [{ required: true, message: '请选择借用人', trigger: 'change' }],
+    borrowerUserId: [{ required: true, message: '请选择申请人', trigger: 'change' }],
     approverUserId: [{ required: true, message: '请选择审批人', trigger: 'change' }],
     borrowDate: [{ required: true, message: '请选择借用时间', trigger: 'change' }],
     dueDate: [
@@ -303,11 +416,11 @@ const createRules: FormRules = {
             trigger: 'change',
         },
     ],
-    purpose: [{ required: true, message: '请输入借用用途', trigger: 'blur' }],
+    purpose: [{ required: true, message: '请输入申请用途', trigger: 'blur' }],
 }
 
 const returnRules: FormRules = {
-    returnCondition: [{ required: true, message: '请输入归还情况', trigger: 'blur' }],
+    returnCondition: [{ required: true, message: '请输入归还检查结果', trigger: 'blur' }],
 }
 
 const statusRules: FormRules = {
@@ -315,20 +428,19 @@ const statusRules: FormRules = {
 }
 
 const workflowSteps = [
-    { index: '1', title: '登记借用', desc: '选择设备、实验室、借用人和应还时间。' },
-    { index: '2', title: '跟踪状态', desc: '借出中关注应还时间，逾期后进入催还处理。' },
-    { index: '3', title: '归还闭环', desc: '登记归还情况后，设备恢复为可借用。' },
+    { index: '01', title: '申请登记', desc: '申请人提交借用目的、时间和来源依据，系统同步记录实验室与设备。' },
+    { index: '02', title: '审批放行', desc: '审批人确认是否允许借出，并决定后续由谁跟进归还。' },
+    { index: '03', title: '归还与联动', desc: '逾期进入催还，归还异常可直接串入维修，校准到期会同步进入提醒。' },
 ]
 
 const statusFilterOptions = [
     { label: '全部', value: 0 },
-    { label: '借出中', value: 2 },
+    { label: '借用中', value: 2 },
     { label: '已逾期', value: 4 },
     { label: '已归还', value: 3 },
 ]
 
 const borrowedCount = computed(() => records.value.filter((item) => item.borrowStatus === 2).length)
-const returnedCount = computed(() => records.value.filter((item) => item.borrowStatus === 3).length)
 const overdueCount = computed(() => records.value.filter((item) => item.borrowStatus === 4).length)
 const filteredRecords = computed(() => {
     if (!statusFilter.value) {
@@ -336,11 +448,14 @@ const filteredRecords = computed(() => {
     }
     return records.value.filter((item) => item.borrowStatus === statusFilter.value)
 })
+const repairLinkedCount = computed(() => records.value.filter((item) => linkedRepair(item)).length)
+
 const recordsSummaryText = computed(() => {
+    const total = filteredRecords.value.length
     if (!statusFilter.value) {
-        return `共 ${records.value.length} 条记录，优先处理 ${overdueCount.value} 条逾期记录。`
+        return `共 ${records.value.length} 条借用链路，其中 ${overdueCount.value} 条需要优先催还，${repairLinkedCount.value} 条已联动到维修。`
     }
-    return `当前筛选：${borrowStatusText(statusFilter.value)}，共 ${filteredRecords.value.length} 条。`
+    return `当前筛选为“${borrowStatusText(statusFilter.value)}”，共 ${total} 条记录。`
 })
 
 const selectedBorrowText = computed(() => {
@@ -348,9 +463,144 @@ const selectedBorrowText = computed(() => {
     if (!borrow) {
         return ''
     }
-    const equipmentName = equipmentMap.value[String(borrow.equipmentId)] || borrow.equipmentId
-    return `${equipmentName} / 应还 ${formatDateTime(borrow.dueDate)}`
+    return `${equipmentName(borrow.equipmentId)} / 应还 ${formatDateTime(borrow.dueDate)}`
 })
+
+const teacherSample = computed(() => records.value.find((item) => isTeacherApplicant(item.borrowerUserId)))
+const studentSample = computed(() => records.value.find((item) => isStudentApplicant(item.borrowerUserId)))
+
+function equipmentName(equipmentId?: number) {
+    if (!equipmentId) {
+        return '-'
+    }
+    return equipmentMap.value[String(equipmentId)] || String(equipmentId)
+}
+
+function laboratoryName(laboratoryId?: number) {
+    if (!laboratoryId) {
+        return '-'
+    }
+    return laboratoryMap.value[String(laboratoryId)] || String(laboratoryId)
+}
+
+function userName(userId?: number) {
+    if (!userId) {
+        return '待分配'
+    }
+    return userMap.value[String(userId)] || String(userId)
+}
+
+function userOption(userId?: number) {
+    return userOptions.value.find((item) => item.id === userId)
+}
+
+function isTeacherApplicant(userId?: number) {
+    const option = userOption(userId)
+    if (!option) {
+        return false
+    }
+    return option.subLabel?.startsWith('teacher_') || option.label.endsWith('老师')
+}
+
+function isStudentApplicant(userId?: number) {
+    const option = userOption(userId)
+    if (!option) {
+        return false
+    }
+    return option.subLabel?.startsWith('student_') || option.label.endsWith('同学')
+}
+
+function repairStatusText(status?: number) {
+    if (status === 2) {
+        return '维修中'
+    }
+    if (status === 3) {
+        return '已修复'
+    }
+    if (status === 4) {
+        return '无法修复'
+    }
+    return '待处理'
+}
+
+function calibrationStatusText(status?: number) {
+    if (status === 2) {
+        return '已确认'
+    }
+    if (status === 1) {
+        return '待确认'
+    }
+    return '待登记'
+}
+
+function returnVerifierText(record: EquipmentBorrowRecord) {
+    if (record.borrowStatus === 3) {
+        return '实验室管理员已核验'
+    }
+    if (record.borrowStatus === 4) {
+        return '等待归还核验'
+    }
+    return '归还后登记'
+}
+
+function borrowNextActor(record: EquipmentBorrowRecord) {
+    if (record.borrowStatus === 4) {
+        return `${userName(record.borrowerUserId)} 先归还，管理员跟进催还`
+    }
+    if (record.borrowStatus === 2) {
+        return '申请人按期归还，管理员核验'
+    }
+    if (record.borrowStatus === 3 && linkedRepair(record)) {
+        return `${userName(linkedRepair(record)?.repairUserId)} 继续维修处理`
+    }
+    if (record.borrowStatus === 3) {
+        return '流程已闭环，可关注下次校准'
+    }
+    if (record.borrowStatus === 5) {
+        return '申请人可补充材料后重新申请'
+    }
+    return `${userName(record.approverUserId)} 处理审批`
+}
+
+function borrowSourceText(record: EquipmentBorrowRecord) {
+    const sourceParts = [
+        `申请人 ${userName(record.borrowerUserId)}`,
+        `审批人 ${userName(record.approverUserId)}`,
+        `依据借用用途“${record.purpose}”`,
+    ]
+    return sourceParts.join('，')
+}
+
+function linkedRepair(record: EquipmentBorrowRecord) {
+    return repairRecords.value.find((item) => item.equipmentId === record.equipmentId)
+}
+
+function linkedCalibration(record: EquipmentBorrowRecord) {
+    return calibrationRecords.value.find((item) => item.equipmentId === record.equipmentId)
+}
+
+function canReturn(record: EquipmentBorrowRecord) {
+    return record.borrowStatus === 2 || record.borrowStatus === 4
+}
+
+function borrowActionHint(record: EquipmentBorrowRecord) {
+    if (record.borrowStatus === 4) {
+        return '已逾期，建议先发送催还通知，再登记归还结果。'
+    }
+    if (record.borrowStatus === 2) {
+        return '借用进行中，需继续跟踪应还时间与设备状态。'
+    }
+    if (record.borrowStatus === 3 && linkedRepair(record)) {
+        return '归还后发现异常，当前已串入维修流程。'
+    }
+    if (record.borrowStatus === 3) {
+        return '借用流程已闭环，可转入常规校准与台账管理。'
+    }
+    if (record.borrowStatus === 5) {
+        return '借用申请已拒绝，设备保持可用状态。'
+    }
+    return '待审批或待补充说明。'
+}
 
 function resetCreateForm() {
     createForm.equipmentId = undefined
@@ -370,8 +620,8 @@ function openCreateDialog() {
 
 function openReturnDialog(row: EquipmentBorrowRecord) {
     currentBorrowId.value = row.id
-    returnForm.returnCondition = ''
-    returnForm.remarks = ''
+    returnForm.returnCondition = row.returnCondition || ''
+    returnForm.remarks = row.remarks || ''
     returnVisible.value = true
 }
 
@@ -381,26 +631,6 @@ function openStatusDialog(row: EquipmentBorrowRecord) {
     statusForm.returnCondition = row.returnCondition || ''
     statusForm.remarks = row.remarks || ''
     statusVisible.value = true
-}
-
-function canReturn(row: EquipmentBorrowRecord) {
-    return row.borrowStatus === 2 || row.borrowStatus === 4
-}
-
-function borrowActionHint(row: EquipmentBorrowRecord) {
-    if (row.borrowStatus === 4) {
-        return '已超过应还时间，建议催还或登记归还'
-    }
-    if (row.borrowStatus === 2) {
-        return '等待归还，到期前保持跟踪'
-    }
-    if (row.borrowStatus === 3) {
-        return '流程已闭环，可查看归还情况'
-    }
-    if (row.borrowStatus === 5) {
-        return '申请已拒绝，设备应保持可用'
-    }
-    return '待审批或待处理'
 }
 
 async function loadOptions() {
@@ -417,11 +647,17 @@ async function loadOptions() {
     userMap.value = optionsToMap(users)
 }
 
-async function loadRecords() {
+async function loadAll() {
     loading.value = true
     try {
-        const result = await fetchEquipmentBorrows({ current: 1, pageSize: 20 })
-        records.value = result.data.records
+        const [borrowResult, repairResult, calibrationResult] = await Promise.all([
+            fetchEquipmentBorrows({ current: 1, pageSize: 50 }),
+            fetchEquipmentRepairs({ current: 1, pageSize: 50 }),
+            fetchEquipmentCalibrations({ current: 1, pageSize: 50 }),
+        ])
+        records.value = borrowResult.data.records
+        repairRecords.value = repairResult.data.records
+        calibrationRecords.value = calibrationResult.data.records
     } finally {
         loading.value = false
     }
@@ -437,7 +673,7 @@ async function submitCreate() {
         await createEquipmentBorrow(createForm)
         ElMessage.success('借用申请已提交')
         createVisible.value = false
-        await loadRecords()
+        await loadAll()
     } finally {
         saving.value = false
     }
@@ -452,9 +688,9 @@ async function submitReturn() {
     try {
         await fetchBorrowDetail(currentBorrowId.value)
         await returnEquipmentBorrow(currentBorrowId.value, returnForm)
-        ElMessage.success('设备已归还')
+        ElMessage.success('设备已登记归还')
         returnVisible.value = false
-        await loadRecords()
+        await loadAll()
     } finally {
         returning.value = false
     }
@@ -468,19 +704,19 @@ async function submitStatus() {
     statusSaving.value = true
     try {
         await updateEquipmentBorrowStatus(currentBorrowId.value, statusForm)
-        ElMessage.success('借用情况已更新')
+        ElMessage.success('借用状态已更新')
         statusVisible.value = false
-        await loadRecords()
+        await loadAll()
     } finally {
         statusSaving.value = false
     }
 }
 
-async function sendReminder(row: EquipmentBorrowRecord) {
-    const equipmentName = equipmentMap.value[String(row.equipmentId)] || row.equipmentId
-    const borrowerName = userMap.value[String(row.borrowerUserId)] || row.borrowerUserId
+async function sendReminder(record: EquipmentBorrowRecord) {
+    const equipment = equipmentName(record.equipmentId)
+    const borrower = userName(record.borrowerUserId)
     const confirmed = await ElMessageBox.confirm(
-        `将向“${borrowerName}”发送设备“${equipmentName}”的逾期催还通知，通知会出现在该账号的“到期提醒 / 我的通知”中。`,
+        `将向 ${borrower} 发送“${equipment}”的逾期催还通知，并在提醒中心留下可追溯记录。`,
         '确认发送催还',
         {
             confirmButtonText: '发送催还',
@@ -491,72 +727,305 @@ async function sendReminder(row: EquipmentBorrowRecord) {
     if (!confirmed) {
         return
     }
-    remindingId.value = row.id
+    remindingId.value = record.id
     try {
-        await sendEquipmentBorrowOverdueReminder(row.id, {
-            message: `您借用的设备“${equipmentName}”已超过应还时间（${formatDateTime(row.dueDate)}），请尽快归还或联系管理员处理。`,
+        await sendEquipmentBorrowOverdueReminder(record.id, {
+            message: `您借用的设备“${equipment}”已超过应还时间（${formatDateTime(record.dueDate)}），请尽快归还；如设备异常，请同步联系管理员转入维修。`,
         })
-        ElMessage.success(`已向 ${borrowerName} 发送催还通知`)
+        ElMessage.success(`已向 ${borrower} 发送催还通知`)
     } finally {
         remindingId.value = undefined
     }
 }
 
 onMounted(async () => {
-    await Promise.all([loadOptions(), loadRecords()])
+    await Promise.all([loadOptions(), loadAll()])
 })
 </script>
 
 <style scoped>
-.borrow-flow {
+.flow-overview {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 16px;
     margin-bottom: 20px;
 }
 
-.flow-step {
+.flow-card {
     display: flex;
-    gap: 12px;
-    min-height: 92px;
+    gap: 14px;
+    min-height: 100px;
     padding: 18px;
-    border: 1px solid rgba(21, 49, 59, 0.1);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.68);
-    box-shadow: 0 14px 32px rgba(17, 39, 47, 0.08);
+    border: 1px solid rgba(116, 145, 155, 0.18);
+    border-radius: 20px;
+    background:
+        linear-gradient(145deg, rgba(15, 20, 26, 0.98), rgba(24, 31, 39, 0.98)),
+        rgba(10, 13, 18, 0.94);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
 }
 
 .flow-index {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
+    width: 34px;
+    height: 34px;
     border-radius: 999px;
-    background: rgba(18, 127, 114, 0.12);
-    color: var(--accent-deep);
+    background: rgba(134, 208, 255, 0.16);
+    color: #8fdcff;
     font-weight: 800;
 }
 
-.flow-step strong {
-    color: var(--text-main);
+.flow-card strong,
+.section-title,
+.record-title {
+    color: #f5f7fa;
     font-weight: 800;
 }
 
-.flow-step p,
+.flow-card p,
+.page-subtitle,
+.section-desc,
+.record-subtitle,
+.detail-block p,
+.link-card p,
 .dialog-tip {
     margin: 6px 0 0;
-    color: var(--text-secondary);
-    line-height: 1.65;
+    color: #a8b3c2;
+    line-height: 1.68;
+}
+
+.stats-row {
+    margin-bottom: 20px;
+}
+
+.metric-card {
+    border-radius: 20px;
+    border: 1px solid rgba(116, 145, 155, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(255, 176, 64, 0.22), transparent 38%),
+        linear-gradient(160deg, rgba(16, 21, 28, 0.98), rgba(28, 35, 45, 0.98));
+}
+
+.metric-label {
+    color: #92a0b2;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.metric-value {
+    margin-top: 10px;
+    color: #f4f7fb;
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 800;
+}
+
+.metric-value.danger {
+    color: var(--danger);
+}
+
+.metric-note {
+    margin-top: 8px;
+    color: #92a0b2;
+    font-size: 13px;
+}
+
+.sample-showcase {
+    margin-bottom: 20px;
+    padding: 22px;
+    border-radius: 24px;
+    border: 1px solid rgba(116, 145, 155, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(88, 164, 255, 0.12), transparent 34%),
+        linear-gradient(145deg, rgba(12, 16, 22, 0.98), rgba(24, 30, 38, 0.98));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+}
+
+.sample-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.sample-tip {
+    color: #7f8da0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.sample-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.sample-card {
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(116, 145, 155, 0.16);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.sample-card.teacher {
+    box-shadow: inset 0 0 0 1px rgba(255, 184, 77, 0.12);
+}
+
+.sample-card.student {
+    box-shadow: inset 0 0 0 1px rgba(88, 164, 255, 0.12);
+}
+
+.sample-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #dbe6f5;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sample-title {
+    margin-top: 14px;
+    color: #f5f7fa;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.sample-line {
+    margin: 8px 0 0;
+    color: #a8b3c2;
+    line-height: 1.7;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
 }
 
 .status-filter {
     flex-shrink: 0;
 }
 
+.record-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.borrow-card {
+    border-radius: 24px;
+    border: 1px solid rgba(116, 145, 155, 0.14);
+    background:
+        linear-gradient(180deg, rgba(14, 18, 24, 0.98), rgba(24, 31, 39, 0.98));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.borrow-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.record-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+}
+
+.next-owner {
+    min-width: 180px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(77, 155, 255, 0.1);
+    border: 1px solid rgba(77, 155, 255, 0.16);
+}
+
+.next-label,
+.chain-label,
+.detail-block-title,
+.link-title {
+    display: block;
+    color: #92a0b2;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.next-owner strong {
+    display: block;
+    margin-top: 8px;
+    color: #f5f7fa;
+    line-height: 1.5;
+}
+
+.chain-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.chain-node {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(116, 145, 155, 0.12);
+}
+
+.chain-node strong {
+    display: block;
+    margin-top: 8px;
+    color: #f5f7fa;
+}
+
+.chain-arrow {
+    justify-self: center;
+    color: #76baff;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.detail-panels,
+.link-panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.detail-block,
+.link-card {
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(116, 145, 155, 0.12);
+}
+
+.detail-block-title,
+.link-title {
+    margin-bottom: 10px;
+}
+
+.action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(116, 145, 155, 0.18);
+}
+
 .action-hint {
-    color: var(--text-secondary);
+    color: #a8b3c2;
     line-height: 1.6;
 }
 
@@ -569,83 +1038,83 @@ onMounted(async () => {
     margin: 0 0 18px;
     padding: 12px 14px;
     border-radius: 14px;
-    background: rgba(18, 127, 114, 0.08);
-    border: 1px solid rgba(18, 127, 114, 0.12);
+    background: rgba(77, 155, 255, 0.08);
+    border: 1px solid rgba(77, 155, 255, 0.14);
 }
 
-.return-dialog :deep(.el-dialog) {
-    background: rgba(255, 250, 244, 0.99);
-    border: 1px solid rgba(21, 49, 59, 0.12);
-    box-shadow: 0 28px 60px rgba(17, 39, 47, 0.2);
+.collab-dialog :deep(.el-dialog) {
+    background: rgba(13, 17, 23, 0.99);
+    border: 1px solid rgba(116, 145, 155, 0.18);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.45);
 }
 
-.return-dialog :deep(.el-dialog__header) {
+.collab-dialog :deep(.el-dialog__header) {
     padding: 22px 24px 12px;
-    border-bottom: 1px solid rgba(21, 49, 59, 0.08);
+    border-bottom: 1px solid rgba(116, 145, 155, 0.12);
 }
 
-.return-dialog :deep(.el-dialog__title) {
-    color: var(--text-main);
+.collab-dialog :deep(.el-dialog__title) {
+    color: #f5f7fa;
     font-family: var(--font-display);
     font-size: 20px;
     font-weight: 700;
 }
 
-.return-dialog :deep(.el-dialog__body) {
+.collab-dialog :deep(.el-dialog__body) {
     padding: 24px;
-    color: var(--text-main);
+    color: #dbe6f5;
 }
 
-.return-dialog :deep(.el-dialog__footer) {
+.collab-dialog :deep(.el-dialog__footer) {
     padding: 12px 24px 24px;
-    border-top: 1px solid rgba(21, 49, 59, 0.08);
+    border-top: 1px solid rgba(116, 145, 155, 0.12);
 }
 
-.return-dialog :deep(.el-form-item__label) {
-    color: var(--text-main);
-    font-weight: 700;
+.collab-dialog :deep(.el-form-item__label),
+.collab-dialog :deep(.el-radio-button__inner),
+.collab-dialog :deep(.el-input__wrapper),
+.collab-dialog :deep(.el-textarea__inner),
+.collab-dialog :deep(.el-select__wrapper) {
+    color: #dbe6f5;
 }
 
-.return-dialog :deep(.el-input__wrapper),
-.return-dialog :deep(.el-textarea__inner) {
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(21, 49, 59, 0.14);
-    color: var(--text-main);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+.collab-dialog :deep(.el-input__wrapper),
+.collab-dialog :deep(.el-textarea__inner),
+.collab-dialog :deep(.el-select__wrapper) {
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1px rgba(116, 145, 155, 0.14) inset;
 }
 
-.return-dialog :deep(.el-input__wrapper.is-focus),
-.return-dialog :deep(.el-textarea__inner:focus) {
-    border-color: rgba(18, 127, 114, 0.45);
-    box-shadow:
-        0 0 0 3px rgba(18, 127, 114, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-.return-dialog :deep(.el-input__inner),
-.return-dialog :deep(.el-textarea__inner) {
-    color: var(--text-main);
-}
-
-.return-dialog :deep(.el-input__inner::placeholder),
-.return-dialog :deep(.el-textarea__inner::placeholder) {
-    color: #6c7d86;
-}
-
-.return-dialog :deep(.el-input.is-disabled .el-input__wrapper) {
-    background: rgba(242, 236, 228, 0.96);
-    border-color: rgba(21, 49, 59, 0.12);
-    box-shadow: none;
-}
-
-.return-dialog :deep(.el-input.is-disabled .el-input__inner) {
-    color: #314a54;
-    -webkit-text-fill-color: #314a54;
+.collab-dialog :deep(.el-input.is-disabled .el-input__wrapper) {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 @media (max-width: 1100px) {
-    .borrow-flow {
+    .flow-overview,
+    .sample-grid,
+    .detail-panels,
+    .link-panels {
         grid-template-columns: 1fr;
+    }
+
+    .chain-row {
+        grid-template-columns: 1fr;
+    }
+
+    .chain-arrow {
+        transform: rotate(90deg);
+    }
+
+    .borrow-card-head,
+    .action-row,
+    .toolbar,
+    .sample-section-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .next-owner {
+        min-width: auto;
     }
 }
 </style>

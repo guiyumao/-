@@ -2,6 +2,7 @@ package edu.university.lab.module.equipmentborrow.controller;
 
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.equipmentborrow.dto.EquipmentBorrowReminderRequest;
 import edu.university.lab.module.equipmentborrow.dto.EquipmentBorrowStatusUpdateRequest;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Equipment Borrow")
+@Tag(name = "设备借用")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/equipment-borrows")
@@ -58,7 +59,7 @@ public class EquipmentBorrowController {
     @PreAuthorize("hasAuthority('equipment_borrow:edit')")
     @PutMapping("/{id}/return")
     public ApiResponse<Boolean> returnEquipment(@PathVariable Integer id, @Valid @RequestBody EquipmentReturnRequest request) {
-        return ApiResponse.success("returned", equipmentBorrowBusinessService.returnEquipment(id, request.getReturnCondition(), request.getRemarks()));
+        return ApiResponse.success(Messages.BORROW_RETURNED, equipmentBorrowBusinessService.returnEquipment(id, request.getReturnCondition(), request.getRemarks()));
     }
 
     @Operation(summary = "更新设备借用状态")
@@ -76,13 +77,13 @@ public class EquipmentBorrowController {
     @PreAuthorize("hasAuthority('equipment_borrow:edit')")
     @PostMapping("/{id}/overdue-reminder")
     public ApiResponse<Boolean> sendOverdueReminder(@PathVariable Integer id, @Valid @RequestBody EquipmentBorrowReminderRequest request) {
-        return ApiResponse.success("sent", equipmentBorrowBusinessService.sendOverdueReminder(id, request.getMessage()));
+        return ApiResponse.success(Messages.BORROW_REMINDER_SENT, equipmentBorrowBusinessService.sendOverdueReminder(id, request.getMessage()));
     }
 
     @Operation(summary = "删除设备借用记录")
     @PreAuthorize("hasAuthority('equipment_borrow:edit')")
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Integer id) {
-        return ApiResponse.success("deleted", equipmentBorrowService.removeById(id));
+        return ApiResponse.success(Messages.BORROW_DELETED, equipmentBorrowService.removeById(id));
     }
 }

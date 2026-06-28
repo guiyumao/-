@@ -2,6 +2,7 @@ package edu.university.lab.module.equipment.controller;
 
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.equipment.entity.Equipment;
 import edu.university.lab.module.equipment.service.EquipmentService;
@@ -45,7 +46,7 @@ public class EquipmentController {
     @PreAuthorize("hasAuthority('equipment:edit')")
     @PostMapping
     public ApiResponse<Boolean> create(@RequestBody Equipment entity) {
-        return ApiResponse.success("created", equipmentService.save(entity));
+        return ApiResponse.success(Messages.EQUIPMENT_CREATED, equipmentService.save(entity));
     }
 
     @Operation(summary = "更新设备")
@@ -53,13 +54,13 @@ public class EquipmentController {
     @PutMapping("/{id}")
     public ApiResponse<Boolean> update(@PathVariable Integer id, @RequestBody Equipment entity) {
         entity.setId(id);
-        return ApiResponse.success("updated", equipmentService.updateById(entity));
+        return ApiResponse.success(Messages.EQUIPMENT_UPDATED, equipmentService.updateById(entity));
     }
 
     @Operation(summary = "删除设备")
     @PreAuthorize("hasAuthority('equipment:edit')")
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Integer id) {
-        return ApiResponse.success("deleted", equipmentService.removeById(id));
+        return ApiResponse.success(Messages.EQUIPMENT_DELETED, equipmentService.removeById(id));
     }
 }

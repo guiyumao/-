@@ -3,6 +3,7 @@ package edu.university.lab.module.equipmentcalibration.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import edu.university.lab.common.audit.AuditLog;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.common.service.BaseCrudService;
 import edu.university.lab.module.equipment.entity.Equipment;
@@ -41,13 +42,13 @@ public class EquipmentCalibrationServiceImpl extends BaseCrudService<EquipmentCa
     public EquipmentCalibration createCalibration(EquipmentCalibration request) {
         Equipment equipment = equipmentService.getById(request.getEquipmentId());
         if (equipment == null) {
-            throw new IllegalArgumentException("Equipment not found");
+            throw new IllegalArgumentException(Messages.EQUIPMENT_NOT_FOUND);
         }
         if (request.getCalibrationDate() == null) {
             request.setCalibrationDate(LocalDateTime.now());
         }
         if (request.getValidUntil() == null || request.getValidUntil().isBefore(request.getCalibrationDate())) {
-            throw new IllegalArgumentException("validUntil must be greater than calibrationDate");
+            throw new IllegalArgumentException(Messages.CALIBRATION_DATE_INVALID);
         }
         if (request.getCalibrationStatus() == null) {
             request.setCalibrationStatus(1);
@@ -64,7 +65,7 @@ public class EquipmentCalibrationServiceImpl extends BaseCrudService<EquipmentCa
     public EquipmentCalibration confirmCalibration(Integer id, EquipmentCalibration request) {
         EquipmentCalibration calibration = getById(id);
         if (calibration == null) {
-            throw new IllegalArgumentException("Calibration record not found");
+            throw new IllegalArgumentException(Messages.CALIBRATION_NOT_FOUND);
         }
         calibration.setCalibrationUserId(request.getCalibrationUserId());
         calibration.setCalibrationDate(request.getCalibrationDate() == null ? calibration.getCalibrationDate() : request.getCalibrationDate());

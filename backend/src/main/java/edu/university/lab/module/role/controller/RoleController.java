@@ -1,6 +1,8 @@
 package edu.university.lab.module.role.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import edu.university.lab.common.api.ApiResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.module.role.dto.RoleMenuAssignRequest;
 import edu.university.lab.module.role.dto.RoleSaveRequest;
 import edu.university.lab.module.role.entity.Role;
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Role")
+@Tag(name = "角色")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/roles")
@@ -31,7 +33,9 @@ public class RoleController {
     @PreAuthorize("hasAuthority('role:view')")
     @GetMapping
     public ApiResponse<List<Role>> list() {
-        return ApiResponse.success(roleService.list());
+        return ApiResponse.success(roleService.list(new LambdaQueryWrapper<Role>()
+            .eq(Role::getStatus, 1)
+            .orderByAsc(Role::getId)));
     }
 
     @Operation(summary = "新增角色")
@@ -59,6 +63,6 @@ public class RoleController {
     @PreAuthorize("hasAuthority('role:edit')")
     @PostMapping("/{id}/menus")
     public ApiResponse<Boolean> assignMenus(@PathVariable Integer id, @RequestBody RoleMenuAssignRequest request) {
-        return ApiResponse.success("assigned", roleService.assignMenus(id, request.getMenuIds()));
+        return ApiResponse.success(Messages.MENU_ASSIGNED, roleService.assignMenus(id, request.getMenuIds()));
     }
 }

@@ -2,20 +2,20 @@
     <el-container class="page-shell app-layout">
         <el-aside class="app-sidebar">
             <div class="sidebar-brand">
-                <div class="eyebrow">Lab Operations Console</div>
-                <h1>实验室设备与耗材平台</h1>
-                <p>把设备、耗材、危化品、提醒与报表汇到同一个清晰的操作中枢。</p>
+                <div class="eyebrow">实验室运营中枢</div>
+                <h1>实验室设备与耗材管理系统</h1>
+                <p>设备、耗材、危化品、提醒和报表都放在同一处，减少切换和重复录入。</p>
             </div>
 
             <div class="sidebar-summary">
                 <div class="summary-card">
                     <div class="summary-label">当前状态</div>
-                    <div class="summary-value">稳定在线</div>
-                    <div class="summary-note">数据、业务、审计三条主线集中管理</div>
+                    <div class="summary-value">在线运行</div>
+                    <div class="summary-note">读取真实后端菜单与权限，不再依赖前端假数据。</div>
                 </div>
                 <div class="summary-strip">
-                    <span class="soft-pill">多角色协作</span>
-                    <span class="soft-pill">流程可追踪</span>
+                    <span class="soft-pill">权限驱动</span>
+                    <span class="soft-pill">中文回退</span>
                 </div>
             </div>
 
@@ -24,23 +24,22 @@
                     :default-active="route.path"
                     class="sidebar-menu"
                     background-color="transparent"
-                    text-color="rgba(248, 243, 236, 0.72)"
-                    active-text-color="#fff8f0"
+                    text-color="rgba(238, 244, 248, 0.74)"
+                    active-text-color="#ffffff"
                     unique-opened
                     @select="handleSelect"
                 >
                     <template v-for="item in menus" :key="item.id">
                         <el-sub-menu v-if="item.children?.length" :index="item.path || String(item.id)">
                             <template #title>
-                                <span>{{ item.label }}</span>
+                                <span>{{ menuLabel(item) }}</span>
                             </template>
                             <el-menu-item v-for="child in item.children" :key="child.path" :index="child.path">
-                                {{ child.label }}
+                                {{ menuLabel(child) }}
                             </el-menu-item>
                         </el-sub-menu>
-
                         <el-menu-item v-else :index="item.path">
-                            {{ item.label }}
+                            {{ menuLabel(item) }}
                         </el-menu-item>
                     </template>
                 </el-menu>
@@ -56,7 +55,7 @@
             <el-header class="app-header">
                 <div class="card-panel app-header-card">
                     <div class="module-copy">
-                        <div class="eyebrow">Current Module</div>
+                        <div class="eyebrow">当前模块</div>
                         <div class="module-title-row">
                             <h2>{{ currentTitle }}</h2>
                             <span class="module-chip">{{ currentPath }}</span>
@@ -92,44 +91,86 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { roleLabels } from '../constants/roles'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const menus = computed(() => authStore.sidebarMenus)
 
-const moduleDescriptions: Record<string, string> = {
-    '/dashboard': '快速查看实验室资产规模、业务运行状态与近期提醒，让每天的工作从重点开始。',
-    '/reminders': '统一查看到期、预警与待处理事项，减少设备与耗材管理中的遗漏。',
-    '/laboratories': '维护实验室台账与基础信息，为用户、资产与权限提供归属上下文。',
-    '/users': '集中管理人员账号、实验室归属与角色能力，让协作边界更清楚。',
-    '/roles': '调整角色菜单和操作权限，控制不同岗位的访问范围与动作能力。',
-    '/audit-logs': '按时间线追踪关键操作，让每一次修改、借还与维护都有迹可循。',
-    '/equipment-categories': '梳理设备分类结构，统一资产命名与统计口径。',
-    '/equipment': '查看设备台账、状态与归属，支撑借用、维修与校准等后续流程。',
-    '/equipment-borrows': '跟踪设备借用、归还与逾期状态，提升流转效率。',
-    '/equipment-repairs': '记录维修过程与结果，帮助维护设备可用性与维修历史。',
-    '/equipment-calibrations': '集中处理校准计划与到期提醒，降低关键设备失准风险。',
-    '/consumable-categories': '统一耗材分类，为采购、出入库和报表分析提供基础。',
-    '/consumables': '管理耗材基础台账、库存信息与保质期状态。',
-    '/consumable-inbounds': '登记采购入库与补货动作，让库存变化来源清晰可查。',
-    '/consumable-outbounds': '记录领用与出库过程，快速掌握成本去向与消耗节奏。',
-    '/hazardous-materials': '维护危化品台账和属性信息，强化特殊物资管理。',
-    '/hazardous-usages': '追踪危化品领用、归还与处理动作，兼顾安全与合规。',
-    '/inventory/alert': '聚焦库存预警、短缺与临期项目，方便优先处理高风险项。',
-    '/reports': '按业务维度查看统计结果与导出报表，给管理决策提供依据。',
+const menus = computed(() => authStore.sidebarMenus)
+const menuLabelMap: Record<string, string> = {
+    '/dashboard': '仪表盘',
+    '/reminders': '到期提醒',
+    '/laboratories': '实验室管理',
+    '/users': '用户管理',
+    '/roles': '角色与菜单',
+    '/audit-logs': '操作日志',
+    '/equipment-categories': '设备分类',
+    '/equipment': '设备台账',
+    '/equipment-borrows': '设备借用',
+    '/equipment-repairs': '设备维修',
+    '/equipment-calibrations': '设备校准',
+    '/consumable-categories': '耗材分类',
+    '/consumables': '耗材台账',
+    '/consumable-inbounds': '耗材入库',
+    '/consumable-outbounds': '耗材出库',
+    '/hazardous-materials': '危化品台账',
+    '/hazardous-usages': '危化品领用',
+    '/inventory/alert': '库存预警',
+    '/reports': '报表中心',
+    '/system': '系统管理',
+    '/assets': '资产档案',
+    '/business': '业务流程',
+    '/inventory': '库存管理',
 }
 
+const moduleDescriptions: Record<string, string> = {
+    '/dashboard': '查看关键统计、趋势和待办，快速把握实验室当天重点。',
+    '/reminders': '集中查看到期、预警和待处理事项，减少遗漏。',
+    '/laboratories': '维护实验室基础信息，为人员和资产提供归属关系。',
+    '/users': '管理账号、角色和实验室归属，统一权限边界。',
+    '/roles': '配置角色与菜单授权，控制不同岗位可见范围。',
+    '/audit-logs': '按时间追踪关键操作，便于审计和回溯。',
+    '/equipment-categories': '整理设备分类，统一命名和统计口径。',
+    '/equipment': '管理设备台账、状态和归属，支撑借用与维修流程。',
+    '/equipment-borrows': '跟踪设备借用、归还和逾期情况。',
+    '/equipment-repairs': '记录维修过程和结果，保留完整维修历史。',
+    '/equipment-calibrations': '集中处理校准计划和到期提醒。',
+    '/consumable-categories': '统一耗材分类，方便采购与库存分析。',
+    '/consumables': '管理耗材台账、库存和保质期状态。',
+    '/consumable-inbounds': '登记采购入库和补货动作。',
+    '/consumable-outbounds': '记录领用和出库过程。',
+    '/hazardous-materials': '维护危化品台账和属性信息。',
+    '/hazardous-usages': '跟踪危化品领用、归还和处置动作。',
+    '/inventory/alert': '聚焦库存预警、短缺和临期项目。',
+    '/reports': '按业务维度查看统计结果和报表导出。',
+}
+
+const currentPath = computed(() => (route.path === '/' ? '/dashboard' : route.path))
 const currentTitle = computed(() => String(route.meta.title || '仪表盘'))
-const currentDescription = computed(() => moduleDescriptions[route.path] || '在统一的后台界面中完成日常操作、追踪状态并保持数据有序。')
-const currentPath = computed(() => route.path === '/' ? '/dashboard' : route.path)
-const userRoleLabel = computed(() => authStore.user?.roleCodes?.[0] || '系统用户')
+const currentDescription = computed(() => moduleDescriptions[currentPath.value] || '在统一的后台界面中完成日常操作、跟踪状态并保持数据有序。')
+const userRoleLabel = computed(() => {
+    const roleCode = authStore.activeRoleCode || authStore.user?.roleCodes?.[0]
+    return roleCode ? roleLabels[roleCode] || roleCode : '系统用户'
+})
 const todayLabel = new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long',
 }).format(new Date())
+
+function isBadLabel(label?: string) {
+    return !label || label === '???' || /^[?\s]+$/.test(label) || label.startsWith('/')
+}
+
+function menuLabel(item: { label?: string; path?: string }) {
+    if (!isBadLabel(item.label)) {
+        return item.label
+    }
+    return menuLabelMap[item.path || ''] || item.path || '未命名菜单'
+}
 
 function handleSelect(index: string) {
     if (index.startsWith('/')) {
@@ -151,12 +192,12 @@ function handleLogout() {
 }
 
 .app-sidebar {
-    width: 320px;
+    width: 330px;
     padding: 28px 20px 20px;
     border-radius: var(--radius-xl);
     background: var(--bg-sidebar-glow), var(--bg-sidebar);
-    color: #f8f3ec;
-    box-shadow: 0 24px 56px rgba(10, 24, 30, 0.24);
+    color: #f4f8fb;
+    box-shadow: 0 24px 56px rgba(4, 9, 16, 0.34);
     border: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
@@ -172,7 +213,7 @@ function handleLogout() {
 
 .sidebar-brand p {
     margin: 14px 0 0;
-    color: rgba(248, 243, 236, 0.72);
+    color: rgba(238, 244, 248, 0.74);
     line-height: 1.7;
 }
 
@@ -194,7 +235,7 @@ function handleLogout() {
     font-size: 12px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(248, 243, 236, 0.58);
+    color: rgba(238, 244, 248, 0.58);
 }
 
 .summary-value,
@@ -207,7 +248,7 @@ function handleLogout() {
 
 .summary-note {
     margin-top: 8px;
-    color: rgba(248, 243, 236, 0.72);
+    color: rgba(238, 244, 248, 0.74);
     line-height: 1.6;
 }
 
@@ -225,7 +266,7 @@ function handleLogout() {
 .sidebar-footer {
     padding: 16px 18px;
     border-radius: 20px;
-    background: rgba(7, 18, 23, 0.22);
+    background: rgba(7, 18, 23, 0.28);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -264,10 +305,6 @@ function handleLogout() {
     line-height: 1.1;
 }
 
-.module-title-row p {
-    margin: 0;
-}
-
 .module-copy p {
     margin: 12px 0 0;
     max-width: 760px;
@@ -280,7 +317,7 @@ function handleLogout() {
     align-items: center;
     padding: 8px 12px;
     border-radius: 999px;
-    background: rgba(18, 127, 114, 0.1);
+    background: rgba(86, 200, 182, 0.12);
     color: var(--accent-deep);
     font-size: 12px;
     font-weight: 700;
@@ -304,7 +341,7 @@ function handleLogout() {
     align-items: center;
     padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--line-soft);
     color: var(--text-main);
     font-size: 13px;
@@ -321,7 +358,7 @@ function handleLogout() {
     gap: 14px;
     padding: 12px 14px 12px 16px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.74);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--line-soft);
 }
 

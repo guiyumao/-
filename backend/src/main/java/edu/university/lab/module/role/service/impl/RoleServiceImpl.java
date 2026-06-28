@@ -2,6 +2,7 @@ package edu.university.lab.module.role.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.module.role.dto.RoleSaveRequest;
 import edu.university.lab.module.role.entity.Role;
 import edu.university.lab.module.role.mapper.RoleMapper;
@@ -24,7 +25,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public Role createRole(RoleSaveRequest request) {
         long exists = count(new LambdaQueryWrapper<Role>().eq(Role::getRoleCode, request.getRoleCode()));
         if (exists > 0) {
-            throw new IllegalArgumentException("Role code already exists");
+            throw new IllegalArgumentException(Messages.ROLE_CODE_EXISTS);
         }
         Role role = new Role();
         role.setRoleCode(request.getRoleCode());
@@ -38,7 +39,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public Role updateRole(Integer id, RoleSaveRequest request) {
         Role role = getById(id);
         if (role == null) {
-            throw new IllegalArgumentException("Role not found");
+            throw new IllegalArgumentException(Messages.ROLE_NOT_FOUND);
         }
         role.setRoleName(request.getRoleName());
         updateById(role);

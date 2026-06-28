@@ -7,10 +7,10 @@
             </div>
 
             <div class="table-tools crud-actions">
-                <el-input v-model="query.keyword" placeholder="请输入关键字" clearable class="crud-search" />
+                <el-input v-model="query.keyword" :placeholder="uiText.keywordPlaceholder" clearable class="crud-search" />
                 <el-button @click="loadData">查询</el-button>
                 <el-button v-if="canCreate" type="primary" @click="handleCreate">
-                    {{ config.createText || '新增记录' }}
+                    {{ config.createText || uiText.defaultCreateText }}
                 </el-button>
             </div>
         </section>
@@ -18,19 +18,19 @@
         <section class="card-panel surface-highlight table-shell crud-table-panel">
             <div class="table-head crud-table-head">
                 <div class="table-head-title">
-                    <div class="eyebrow">Records</div>
-                    <h3>{{ isCardLayout ? '卡片视图' : '数据列表' }}</h3>
+                    <div class="eyebrow">{{ uiText.recordEyebrow }}</div>
+                    <h3>{{ isCardLayout ? uiText.cardViewTitle : uiText.tableViewTitle }}</h3>
                     <p>
                         {{
                             isCardLayout
-                                ? '分类会以卡片形式展示，并带出对应的关联记录。'
-                                : '在这里统一查看、编辑和删除当前模块的数据。'
+                                ? uiText.cardViewDescription
+                                : uiText.tableViewDescription
                         }}
                     </p>
                 </div>
                 <div class="table-meta">
                     <div class="count-badge">
-                        <span>当前记录</span>
+                        <span>{{ uiText.currentRecords }}</span>
                         <strong>{{ query.total }}</strong>
                     </div>
                     <div class="table-summary">共 {{ query.total }} 条记录</div>
@@ -47,8 +47,8 @@
                     </div>
 
                     <div class="crud-record-main">
-                        <h4>{{ cardTitleValue(row) || '未命名记录' }}</h4>
-                        <p>{{ cardDescriptionValue(row) || '暂无补充说明。' }}</p>
+                        <h4>{{ cardTitleValue(row) || uiText.unnamedRecord }}</h4>
+                        <p>{{ cardDescriptionValue(row) || uiText.emptyDescription }}</p>
                     </div>
 
                     <div v-if="cardDetailColumns.length" class="crud-record-fields">
@@ -83,7 +83,7 @@
                         </div>
 
                         <p v-else class="crud-related-empty">
-                            {{ config.cardRelation.emptyText || '当前卡片下暂无关联记录。' }}
+                            {{ config.cardRelation.emptyText || uiText.emptyRelatedRecords }}
                         </p>
                     </section>
 
@@ -208,6 +208,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { createOne, deleteOne, fetchPage, updateOne } from '../../api/crud'
+import { uiText } from '../../constants/uiText'
 import { useAuthStore } from '../../stores/auth'
 import type { CrudCardRelationConfig, CrudModuleConfig } from '../../types/crud'
 import { emitCrudSync, useCrudSync } from '../../utils/crudSync'
@@ -383,7 +384,7 @@ async function loadData() {
                 await loadRelatedData(props.config.cardRelation)
             } catch (error) {
                 relatedRecords.value = []
-                ElMessage.error('主数据已刷新，但关联记录同步失败，请稍后重试')
+                ElMessage.error(uiText.relatedSyncFailed)
                 console.error('Failed to load related records', error)
             }
         } else {
@@ -419,10 +420,10 @@ async function handleSave() {
     try {
         if (editingId.value) {
             await updateOne(props.config.endpoint, editingId.value, formModel)
-            ElMessage.success('更新成功')
+            ElMessage.success(uiText.updateSuccess)
         } else {
             await createOne(props.config.endpoint, formModel)
-            ElMessage.success('创建成功')
+            ElMessage.success(uiText.createSuccess)
         }
 
         dialogVisible.value = false
@@ -440,7 +441,7 @@ async function handleDelete(id: number) {
     }
 
     await deleteOne(props.config.endpoint, id)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText.deleteSuccess)
     await loadData()
     emitCrudSync(syncKeys, syncSource)
 }

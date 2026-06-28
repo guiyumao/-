@@ -3,7 +3,7 @@
         <div class="page-header">
             <div>
                 <h2 class="page-title">用户管理</h2>
-                <p class="page-subtitle">维护实验室平台的登录账号、基础信息与密码重置。</p>
+                <p class="page-subtitle">维护实验室平台账号、主身份类型与可切换的细分角色。</p>
             </div>
             <div class="table-tools">
                 <el-input v-model="query.keyword" placeholder="请输入姓名、用户名或工号" class="user-search" clearable />
@@ -15,9 +15,9 @@
         <section class="card-panel surface-highlight table-shell">
             <div class="table-head">
                 <div class="table-head-title">
-                    <div class="eyebrow">Accounts</div>
+                    <div class="eyebrow">Account Maintenance</div>
                     <h3>人员账号列表</h3>
-                    <p>集中维护实验室用户身份、归属实验室和账号状态，便于后续权限与业务流程联动。</p>
+                    <p>同一账号可以保留一个主身份类型，并额外绑定多个业务角色，用于登录时切换权限视角。</p>
                 </div>
                 <div class="table-meta">
                     <div class="count-badge">
@@ -34,7 +34,7 @@
                         <span class="data-code">{{ row.username }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="姓名" min-width="130">
+                <el-table-column label="姓名" min-width="140">
                     <template #default="{ row }">
                         <div class="data-stack">
                             <strong>{{ row.realName }}</strong>
@@ -44,7 +44,22 @@
                 </el-table-column>
                 <el-table-column label="工号/学号" min-width="150">
                     <template #default="{ row }">
-                        <span class="data-chip">{{ row.userNo }}</span>
+                        <span class="data-chip">{{ row.userNo || '-' }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="角色" min-width="240">
+                    <template #default="{ row }">
+                        <div class="role-tag-group">
+                            <el-tag
+                                v-for="roleCode in row.roleCodes"
+                                :key="roleCode"
+                                size="small"
+                                effect="plain"
+                            >
+                                {{ roleLabels[roleCode] || roleCode }}
+                            </el-tag>
+                            <span v-if="!row.roleCodes?.length" class="data-secondary">-</span>
+                        </div>
                     </template>
                 </el-table-column>
                 <el-table-column prop="phone" label="手机号" min-width="150" />
@@ -53,7 +68,7 @@
                         <span class="data-secondary">{{ row.email || '-' }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="所属实验室" min-width="140">
+                <el-table-column label="所属实验室" min-width="160">
                     <template #default="{ row }">
                         <span class="data-secondary">{{ laboratoryMap[String(row.laboratoryId)] || row.laboratoryId || '-' }}</span>
                     </template>
@@ -101,7 +116,7 @@
             </div>
         </section>
 
-        <el-dialog v-model="dialogVisible" :title="editingId ? '编辑用户' : '新增用户'" width="720px">
+        <el-dialog v-model="dialogVisible" :title="editingId ? '编辑用户' : '新增用户'" width="760px">
             <el-form :model="formModel" label-width="120px">
                 <el-form-item label="所属实验室">
                     <el-select v-model="formModel.laboratoryId" placeholder="请选择实验室" style="width: 100%">
@@ -112,7 +127,7 @@
                     <el-input v-model="formModel.username" />
                 </el-form-item>
                 <el-form-item v-if="!editingId" label="初始密码">
-                    <el-input v-model="formModel.initialPassword" type="password" show-password placeholder="请输入初始密码，长度不少于 6 位" />
+                    <el-input v-model="formModel.initialPassword" type="password" show-password placeholder="请输入至少 6 位初始密码" />
                 </el-form-item>
                 <el-form-item label="姓名">
                     <el-input v-model="formModel.realName" />
@@ -126,10 +141,23 @@
                 <el-form-item label="邮箱">
                     <el-input v-model="formModel.email" />
                 </el-form-item>
-                <el-form-item label="用户类型">
+                <el-form-item label="主身份类型">
                     <el-select v-model="formModel.userType" placeholder="请选择用户类型" style="width: 100%">
                         <el-option v-for="item in userTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
                     </el-select>
+                </el-form-item>
+                <el-form-item label="附加角色">
+                    <el-select
+                        v-model="formModel.roleIds"
+                        multiple
+                        collapse-tags
+                        collapse-tags-tooltip
+                        placeholder="可按需要叠加多个业务角色"
+                        style="width: 100%"
+                    >
+                        <el-option v-for="item in roleOptions" :key="item.id" :label="getRoleDisplayName(item.roleCode, item.roleName)" :value="item.id" />
+                    </el-select>
+                    <div class="form-tip">当前主身份映射的基础角色会由系统自动保留，无需手动重复勾选。</div>
                 </el-form-item>
                 <el-form-item label="状态">
                     <el-switch v-model="enabled" />
@@ -166,8 +194,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { deleteOne, fetchPage } from '../../api/crud'
-import { fetchLaboratoryOptions, optionsToMap, type SelectOption } from '../../api/modules/business'
+import { fetchLaboratoryOptions, firstOptionId, optionsToMap, type SelectOption } from '../../api/modules/business'
+import { fetchRoles, type RoleItem } from '../../api/modules/role'
 import { createUser, resetUserPassword, updateUser } from '../../api/modules/user'
+import { roleLabels } from '../../constants/roles'
 
 interface UserRecord {
     id?: number
@@ -179,9 +209,11 @@ interface UserRecord {
     email: string
     userType: number
     status: number
+    roleIds: number[]
+    roleCodes: string[]
 }
 
-interface UserFormModel extends UserRecord {
+interface UserFormModel extends Omit<UserRecord, 'roleCodes'> {
     initialPassword: string
 }
 
@@ -196,6 +228,7 @@ const resetFormRef = ref<FormInstance>()
 const records = ref<UserRecord[]>([])
 const laboratoryMap = ref<Record<string, string>>({})
 const laboratoryOptions = ref<SelectOption[]>([])
+const roleOptions = ref<RoleItem[]>([])
 const userTypeOptions = [
     { label: '系统管理员', value: 1 },
     { label: '实验室主任', value: 2 },
@@ -219,16 +252,27 @@ const query = reactive({
     total: 0,
 })
 
+function getRoleDisplayName(roleCode: string, fallback?: string) {
+    return roleLabels[roleCode] || fallback || roleCode
+}
+
+function createDefaultUserForm(): UserFormModel {
+    return {
+        laboratoryId: firstOptionId(laboratoryOptions.value) ?? 0,
+        username: '',
+        initialPassword: '',
+        realName: '',
+        userNo: '',
+        phone: '',
+        email: '',
+        userType: 6,
+        status: 1,
+        roleIds: [],
+    }
+}
+
 const formModel = reactive<UserFormModel>({
-    laboratoryId: 1,
-    username: '',
-    initialPassword: '',
-    realName: '',
-    userNo: '',
-    phone: '',
-    email: '',
-    userType: 6,
-    status: 1,
+    ...createDefaultUserForm(),
 })
 
 const enabled = computed({
@@ -264,17 +308,7 @@ const resetRules: FormRules = {
 }
 
 function resetEditForm() {
-    Object.assign(formModel, {
-        laboratoryId: 1,
-        username: '',
-        initialPassword: '',
-        realName: '',
-        userNo: '',
-        phone: '',
-        email: '',
-        userType: 6,
-        status: 1,
-    })
+    Object.assign(formModel, createDefaultUserForm())
     editingId.value = null
 }
 
@@ -282,6 +316,11 @@ async function loadLaboratoryMap() {
     const laboratories = await fetchLaboratoryOptions()
     laboratoryOptions.value = laboratories
     laboratoryMap.value = optionsToMap(laboratories)
+}
+
+async function loadRoleOptions() {
+    const result = await fetchRoles()
+    roleOptions.value = result.data.filter((role) => role.status === 1)
 }
 
 async function loadData() {
@@ -315,6 +354,7 @@ function handleEdit(record: UserRecord) {
         email: record.email,
         userType: record.userType,
         status: record.status,
+        roleIds: [...(record.roleIds || [])],
     })
     editingId.value = Number(record.id)
     dialogVisible.value = true
@@ -333,6 +373,7 @@ async function handleSave() {
                 email: formModel.email,
                 userType: formModel.userType,
                 status: formModel.status,
+                roleIds: formModel.roleIds,
             })
             ElMessage.success('用户更新成功')
         } else {
@@ -346,6 +387,7 @@ async function handleSave() {
                 email: formModel.email,
                 userType: formModel.userType,
                 status: formModel.status,
+                roleIds: formModel.roleIds,
             })
             ElMessage.success('用户创建成功')
         }
@@ -391,7 +433,7 @@ async function submitResetPassword() {
 }
 
 onMounted(async () => {
-    await Promise.all([loadLaboratoryMap(), loadData()])
+    await Promise.all([loadLaboratoryMap(), loadRoleOptions(), loadData()])
 })
 </script>
 
@@ -407,6 +449,19 @@ onMounted(async () => {
 
 .user-table {
     border: 1px solid rgba(21, 49, 59, 0.07);
+}
+
+.role-tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.form-tip {
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
 }
 
 .user-pagination {

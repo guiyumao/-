@@ -3,6 +3,7 @@ package edu.university.lab.module.consumableoutbound.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import edu.university.lab.common.audit.AuditLog;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.common.service.BaseCrudService;
 import edu.university.lab.module.consumableoutbound.entity.ConsumableOutbound;
@@ -39,7 +40,7 @@ public class ConsumableOutboundServiceImpl extends BaseCrudService<ConsumableOut
             .eq(Inventory::getBatchNo, outbound.getBatchNo())
             .last("LIMIT 1"));
         if (inventory == null || inventory.getQuantity().compareTo(outbound.getQuantity()) < 0) {
-            throw new IllegalStateException("Insufficient consumable inventory");
+            throw new IllegalStateException(Messages.INSUFFICIENT_INVENTORY);
         }
 
         outbound.setUnitPrice(inventory.getUnitPrice());

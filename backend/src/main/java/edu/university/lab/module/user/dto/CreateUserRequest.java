@@ -3,6 +3,7 @@ package edu.university.lab.module.user.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import lombok.Data;
 
 @Data
@@ -37,4 +38,6 @@ public class CreateUserRequest {
 
     @NotNull
     private Integer status;
+
+    private List<Integer> roleIds;
 }

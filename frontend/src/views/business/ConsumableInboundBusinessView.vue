@@ -32,6 +32,16 @@
                 <el-table-column prop="totalAmount" label="金额" min-width="110" />
                 <el-table-column prop="supplierName" label="供应商" min-width="150" />
                 <el-table-column prop="inboundDate" label="入库时间" min-width="170" />
+                <el-table-column label="来源信息" min-width="220">
+                    <template #default="{ row }">
+                        <div class="data-stack">
+                            <strong>操作人：{{ userMap[String(row.operatorUserId)] || row.operatorUserId || '-' }}</strong>
+                            <span>供应商：{{ row.supplierName || '-' }}</span>
+                            <span>批号：{{ row.batchNo || '-' }}</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="remarks" label="来源说明" min-width="180" show-overflow-tooltip />
             </el-table>
         </el-card>
 
@@ -130,6 +140,7 @@ const laboratoryOptions = ref<SelectOption[]>([])
 const consumableOptions = ref<SelectOption[]>([])
 const userOptions = ref<SelectOption[]>([])
 const consumableMap = ref<Record<string, string>>({})
+const userMap = ref<Record<string, string>>({})
 const formRef = ref<FormInstance>()
 const authStore = useAuthStore()
 
@@ -182,6 +193,7 @@ async function loadOptions() {
     consumableOptions.value = consumables
     userOptions.value = users
     consumableMap.value = optionsToMap(consumables)
+    userMap.value = optionsToMap(users)
 }
 
 function resetForm() {

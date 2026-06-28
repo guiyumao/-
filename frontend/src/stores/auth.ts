@@ -6,6 +6,7 @@ import { clearToken, getToken, setToken } from '../utils/token'
 interface AuthState {
     token: string
     user: UserProfile | null
+    activeRoleCode: string
     menus: MenuItem[]
     permissions: string[]
     initialized: boolean
@@ -15,6 +16,7 @@ export const useAuthStore = defineStore('auth', {
     state: (): AuthState => ({
         token: getToken() ?? '',
         user: null,
+        activeRoleCode: '',
         menus: [],
         permissions: [],
         initialized: false,
@@ -51,10 +53,11 @@ export const useAuthStore = defineStore('auth', {
         permissionSet: (state) => new Set(state.permissions),
     },
     actions: {
-        async login(username: string, password: string) {
-            const result = await loginApi(username, password)
+        async login(username: string, password: string, roleCode: string) {
+            const result = await loginApi(username, password, roleCode)
             this.token = result.data.token
             this.user = result.data.user
+            this.activeRoleCode = result.data.roleCode
             this.menus = result.data.menus
             this.permissions = result.data.permissions
             this.initialized = true
@@ -69,6 +72,7 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const result = await getAuthContext()
                 this.user = result.data.user
+                this.activeRoleCode = result.data.roleCode
                 this.menus = result.data.menus
                 this.permissions = result.data.permissions
             } catch (error) {
@@ -81,6 +85,7 @@ export const useAuthStore = defineStore('auth', {
         logout() {
             this.token = ''
             this.user = null
+            this.activeRoleCode = ''
             this.menus = []
             this.permissions = []
             this.initialized = true

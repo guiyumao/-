@@ -1,0 +1,470 @@
+{
+  "laboratories": [
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "laboratoryName": "分析化学实验室",
+      "location": "理科楼 A201",
+      "contactPhone": "021-55550001",
+      "safetyLevel": 3,
+      "status": 1
+    },
+    {
+      "laboratoryCode": "LAB-BIO-02",
+      "laboratoryName": "分子生物实验室",
+      "location": "生命科学楼 B305",
+      "contactPhone": "021-55550002",
+      "safetyLevel": 2,
+      "status": 1
+    }
+  ],
+  "equipmentCategories": [
+    {
+      "categoryCode": "EQ-CAT-ANA",
+      "categoryName": "分析仪器",
+      "description": "用于检测与分析的通用实验设备",
+      "status": 1
+    },
+    {
+      "categoryCode": "EQ-CAT-BIO",
+      "categoryName": "生物仪器",
+      "description": "用于分子生物与样本处理的实验设备",
+      "status": 1
+    }
+  ],
+  "consumableCategories": [
+    {
+      "categoryCode": "CON-CAT-GLASS",
+      "categoryName": "玻璃耗材",
+      "description": "实验常用玻璃器皿及配件",
+      "status": 1
+    },
+    {
+      "categoryCode": "CON-CAT-REAGENT",
+      "categoryName": "通用试剂",
+      "description": "实验基础化学试剂与缓冲液",
+      "status": 1
+    }
+  ],
+  "equipment": [
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "categoryCode": "EQ-CAT-ANA",
+      "equipmentCode": "EQ-UV-0001",
+      "equipmentName": "紫外可见分光光度计",
+      "model": "UV-2600i",
+      "brand": "Shimadzu",
+      "manufacturer": "岛津",
+      "purchaseDate": "2024-03-12 09:00:00",
+      "purchasePrice": 86000.00,
+      "serviceLifeYears": 8,
+      "storageLocation": "分析区 1 号台",
+      "status": 1,
+      "calibrationCycleDays": 365,
+      "lastCalibrationDate": "2025-03-10 10:00:00",
+      "nextCalibrationDate": "2026-03-10 10:00:00",
+      "remarks": "用于常规吸光度测定"
+    },
+    {
+      "laboratoryCode": "LAB-BIO-02",
+      "categoryCode": "EQ-CAT-BIO",
+      "equipmentCode": "EQ-PCR-0001",
+      "equipmentName": "实时荧光定量 PCR 仪",
+      "model": "QuantStudio 5",
+      "brand": "Applied Biosystems",
+      "manufacturer": "Thermo Fisher",
+      "purchaseDate": "2023-09-08 14:00:00",
+      "purchasePrice": 198000.00,
+      "serviceLifeYears": 8,
+      "storageLocation": "扩增区 2 号台",
+      "status": 1,
+      "calibrationCycleDays": 365,
+      "lastCalibrationDate": "2025-09-01 09:30:00",
+      "nextCalibrationDate": "2026-09-01 09:30:00",
+      "remarks": "用于基因表达定量分析"
+    }
+  ],
+  "consumables": [
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "categoryCode": "CON-CAT-GLASS",
+      "consumableCode": "CON-FLASK-500",
+      "consumableName": "容量瓶",
+      "specification": "500mL A 级",
+      "unit": "个",
+      "unitPrice": 28.50,
+      "safetyStock": 10,
+      "maxStock": 80,
+      "storageLocation": "器皿柜 A-02",
+      "expiryRequired": 0,
+      "status": 1,
+      "remarks": "用于标准溶液配制"
+    },
+    {
+      "laboratoryCode": "LAB-BIO-02",
+      "categoryCode": "CON-CAT-REAGENT",
+      "consumableCode": "CON-PBS-500",
+      "consumableName": "PBS 缓冲液",
+      "specification": "500mL",
+      "unit": "瓶",
+      "unitPrice": 16.80,
+      "safetyStock": 12,
+      "maxStock": 60,
+      "storageLocation": "冷藏柜 B-01",
+      "expiryRequired": 1,
+      "status": 1,
+      "remarks": "细胞清洗与稀释使用"
+    }
+  ],
+  "hazardousMaterials": [
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "hazardousCode": "HZ-ETHANOL-01",
+      "materialName": "无水乙醇",
+      "casNo": "64-17-5",
+      "hazardCategory": "易燃液体",
+      "specification": "500mL/瓶",
+      "unit": "瓶",
+      "concentration": "99.7%",
+      "storageLocation": "危化品柜 C-01",
+      "safetyStock": 6,
+      "msdsCode": "MSDS-ETHANOL-01",
+      "status": 1,
+      "remarks": "需远离火源并单独登记领用"
+    },
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "hazardousCode": "HZ-HCL-01",
+      "materialName": "盐酸",
+      "casNo": "7647-01-0",
+      "hazardCategory": "腐蚀性液体",
+      "specification": "500mL/瓶",
+      "unit": "瓶",
+      "concentration": "36%-38%",
+      "storageLocation": "危化品柜 C-02",
+      "safetyStock": 4,
+      "msdsCode": "MSDS-HCL-01",
+      "status": 2,
+      "remarks": "取用时需佩戴护目镜和耐酸手套"
+    }
+  ],
+  "users": [
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "username": "teacher_chen",
+      "password": "demo123",
+      "realName": "陈老师",
+      "userNo": "T2026001",
+      "phone": "13800010001",
+      "email": "teacher_chen@lab.edu.cn",
+      "gender": 1,
+      "userType": 6,
+      "status": 1,
+      "roleCodes": ["teacher"]
+    },
+    {
+      "laboratoryCode": "LAB-BIO-02",
+      "username": "student_lin",
+      "password": "demo123",
+      "realName": "林同学",
+      "userNo": "S2026008",
+      "phone": "13800010002",
+      "email": "student_lin@lab.edu.cn",
+      "gender": 0,
+      "userType": 7,
+      "status": 1,
+      "roleCodes": ["student"]
+    },
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "username": "consumable_liu",
+      "password": "demo123",
+      "realName": "刘耗材",
+      "userNo": "C2026003",
+      "phone": "13800010003",
+      "email": "consumable_liu@lab.edu.cn",
+      "gender": 1,
+      "userType": 4,
+      "status": 1,
+      "roleCodes": ["consumable_admin"]
+    },
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "username": "hazardous_wang",
+      "password": "demo123",
+      "realName": "王危化",
+      "userNo": "H2026004",
+      "phone": "13800010004",
+      "email": "hazardous_wang@lab.edu.cn",
+      "gender": 1,
+      "userType": 5,
+      "status": 1,
+      "roleCodes": ["hazardous_admin"]
+    }
+  ],
+  "inventory": [
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "itemType": 2,
+      "itemCode": "CON-FLASK-500",
+      "batchNo": "BATCH-FLASK-202605",
+      "quantity": 46,
+      "lockedQuantity": 0,
+      "unitPrice": 28.50,
+      "productionDate": "2026-05-01 00:00:00",
+      "expiryDate": null,
+      "lastStockInTime": "2026-05-20 09:20:00",
+      "lastStockOutTime": "2026-06-08 15:30:00",
+      "warningStatus": 0,
+      "remarks": "示例库存：容量瓶批次"
+    },
+    {
+      "laboratoryCode": "LAB-BIO-02",
+      "itemType": 2,
+      "itemCode": "CON-PBS-500",
+      "batchNo": "BATCH-PBS-202606",
+      "quantity": 18,
+      "lockedQuantity": 2,
+      "unitPrice": 16.80,
+      "productionDate": "2026-06-01 00:00:00",
+      "expiryDate": "2027-06-01 00:00:00",
+      "lastStockInTime": "2026-06-03 10:10:00",
+      "lastStockOutTime": "2026-06-12 11:00:00",
+      "warningStatus": 0,
+      "remarks": "示例库存：PBS 缓冲液批次"
+    },
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "itemType": 3,
+      "itemCode": "HZ-ETHANOL-01",
+      "batchNo": "HZ-ETH-202604",
+      "quantity": 9,
+      "lockedQuantity": 0,
+      "unitPrice": 22.00,
+      "productionDate": "2026-04-08 00:00:00",
+      "expiryDate": "2028-04-08 00:00:00",
+      "lastStockInTime": "2026-04-15 14:00:00",
+      "lastStockOutTime": "2026-06-10 16:00:00",
+      "warningStatus": 0,
+      "remarks": "示例库存：无水乙醇批次"
+    },
+    {
+      "laboratoryCode": "LAB-CHEM-01",
+      "itemType": 3,
+      "itemCode": "HZ-HCL-01",
+      "batchNo": "HZ-HCL-202605",
+      "quantity": 3,
+      "lockedQuantity": 0,
+      "unitPrice": 18.00,
+      "productionDate": "2026-05-12 00:00:00",
+      "expiryDate": "2027-05-12 00:00:00",
+      "lastStockInTime": "2026-05-20 13:20:00",
+      "lastStockOutTime": null,
+      "warningStatus": 1,
+      "remarks": "低于安全库存的演示数据"
+    }
+  ],
+  "equipmentBorrows": [
+    {
+      "equipmentCode": "EQ-UV-0001",
+      "borrowerUsername": "teacher_chen",
+      "approverUsername": "admin",
+      "purpose": "本科实验课程样品吸光度检测",
+      "borrowDate": "2026-06-10 09:00:00",
+      "dueDate": "2026-06-12 17:00:00",
+      "actualReturnDate": "2026-06-12 16:20:00",
+      "borrowStatus": 3,
+      "returnCondition": "设备完好，附件齐全",
+      "remarks": "示例借还记录"
+    },
+    {
+      "equipmentCode": "EQ-PCR-0001",
+      "borrowerUsername": "student_lin",
+      "approverUsername": "admin",
+      "purpose": "科研项目 qPCR 数据采集",
+      "borrowDate": "2026-06-14 10:00:00",
+      "dueDate": "2026-06-20 17:00:00",
+      "actualReturnDate": null,
+      "borrowStatus": 2,
+      "returnCondition": null,
+      "remarks": "当前借出示例"
+    }
+  ],
+  "equipmentRepairs": [
+    {
+      "equipmentCode": "EQ-UV-0001",
+      "reporterUsername": "admin",
+      "repairUsername": "admin",
+      "faultDescription": "开机后光源预热时间偏长",
+      "reportTime": "2026-05-22 10:30:00",
+      "repairStartTime": "2026-05-22 14:00:00",
+      "repairEndTime": "2026-05-23 11:20:00",
+      "repairStatus": 3,
+      "repairCost": 380.00,
+      "repairResult": "更换老化灯座接插件，测试通过",
+      "remarks": "示例维修记录"
+    }
+  ],
+  "equipmentCalibrations": [
+    {
+      "equipmentCode": "EQ-UV-0001",
+      "calibrationUsername": "admin",
+      "certificateNo": "CAL-UV-20260310",
+      "calibrationDate": "2026-03-10 10:00:00",
+      "validUntil": "2027-03-10 10:00:00",
+      "calibrationResult": 1,
+      "calibrationStatus": 2,
+      "remarks": "示例校准记录"
+    },
+    {
+      "equipmentCode": "EQ-PCR-0001",
+      "calibrationUsername": "admin",
+      "certificateNo": "CAL-PCR-20260901",
+      "calibrationDate": "2026-09-01 09:30:00",
+      "validUntil": "2027-09-01 09:30:00",
+      "calibrationResult": 1,
+      "calibrationStatus": 1,
+      "remarks": "待确认校准计划示例"
+    }
+  ],
+  "consumableInbounds": [
+    {
+      "consumableCode": "CON-FLASK-500",
+      "operatorUsername": "consumable_liu",
+      "batchNo": "BATCH-FLASK-202605",
+      "inboundType": 1,
+      "quantity": 50,
+      "unitPrice": 28.50,
+      "totalAmount": 1425.00,
+      "productionDate": "2026-05-01 00:00:00",
+      "expiryDate": null,
+      "supplierName": "上海科教仪器有限公司",
+      "inboundDate": "2026-05-20 09:20:00",
+      "remarks": "来源：上海科教仪器有限公司采购入库，操作人刘耗材"
+    },
+    {
+      "consumableCode": "CON-PBS-500",
+      "operatorUsername": "consumable_liu",
+      "batchNo": "BATCH-PBS-202606",
+      "inboundType": 1,
+      "quantity": 24,
+      "unitPrice": 16.80,
+      "totalAmount": 403.20,
+      "productionDate": "2026-06-01 00:00:00",
+      "expiryDate": "2027-06-01 00:00:00",
+      "supplierName": "生工生物工程有限公司",
+      "inboundDate": "2026-06-03 10:10:00",
+      "remarks": "来源：生工生物工程有限公司采购入库，操作人刘耗材"
+    },
+    {
+      "consumableCode": "CON-PBS-500",
+      "operatorUsername": "consumable_liu",
+      "batchNo": "BATCH-PBS-202606-B",
+      "inboundType": 2,
+      "quantity": 12,
+      "unitPrice": 17.20,
+      "totalAmount": 206.40,
+      "productionDate": "2026-06-08 00:00:00",
+      "expiryDate": "2027-06-08 00:00:00",
+      "supplierName": "校内共享试剂中心",
+      "inboundDate": "2026-06-09 14:30:00",
+      "remarks": "来源：校内调拨补货，操作人刘耗材"
+    }
+  ],
+  "consumableOutbounds": [
+    {
+      "consumableCode": "CON-FLASK-500",
+      "applicantUsername": "teacher_chen",
+      "approverUsername": "admin",
+      "operatorUsername": "consumable_liu",
+      "batchNo": "BATCH-FLASK-202605",
+      "outboundType": 1,
+      "quantity": 4,
+      "unitPrice": 28.50,
+      "totalAmount": 114.00,
+      "outboundDate": "2026-06-08 15:30:00",
+      "purpose": "分析化学教学实验",
+      "outboundStatus": 2,
+      "remarks": "来源：陈老师教学实验申领，管理员审批，刘耗材出库"
+    },
+    {
+      "consumableCode": "CON-PBS-500",
+      "applicantUsername": "student_lin",
+      "approverUsername": "admin",
+      "operatorUsername": "consumable_liu",
+      "batchNo": "BATCH-PBS-202606",
+      "outboundType": 2,
+      "quantity": 6,
+      "unitPrice": 16.80,
+      "totalAmount": 100.80,
+      "outboundDate": "2026-06-12 11:00:00",
+      "purpose": "细胞样本清洗",
+      "outboundStatus": 2,
+      "remarks": "来源：林同学实验领用，管理员审批，刘耗材出库"
+    },
+    {
+      "consumableCode": "CON-PBS-500",
+      "applicantUsername": "teacher_chen",
+      "approverUsername": "admin",
+      "operatorUsername": "consumable_liu",
+      "batchNo": "BATCH-PBS-202606-B",
+      "outboundType": 3,
+      "quantity": 3,
+      "unitPrice": 17.20,
+      "totalAmount": 51.60,
+      "outboundDate": "2026-06-18 09:40:00",
+      "purpose": "共享试剂调拨到教学准备区",
+      "outboundStatus": 2,
+      "remarks": "来源：教学准备调拨，陈老师申请，刘耗材操作"
+    }
+  ],
+  "hazardousUsages": [
+    {
+      "hazardousCode": "HZ-ETHANOL-01",
+      "applicantUsername": "teacher_chen",
+      "approverUsername": "admin",
+      "operatorUsername": "hazardous_wang",
+      "actionType": 2,
+      "batchNo": "HZ-ETH-202604",
+      "quantity": 2,
+      "remainingQuantity": null,
+      "usageDate": "2026-06-10 16:00:00",
+      "purpose": "实验器皿消毒",
+      "projectName": "教学实验准备",
+      "witnessName": "王老师",
+      "usageStatus": 2,
+      "remarks": "来源：教学实验准备领用，陈老师申请，王危化登记"
+    },
+    {
+      "hazardousCode": "HZ-HCL-01",
+      "applicantUsername": "hazardous_wang",
+      "approverUsername": "admin",
+      "operatorUsername": "hazardous_wang",
+      "actionType": 1,
+      "batchNo": "HZ-HCL-202605",
+      "quantity": 3,
+      "remainingQuantity": null,
+      "usageDate": "2026-05-20 13:20:00",
+      "purpose": "采购入库",
+      "projectName": "危化品库存补充",
+      "witnessName": "李老师",
+      "usageStatus": 2,
+      "remarks": "来源：危化品采购入库，王危化登记，李老师见证"
+    },
+    {
+      "hazardousCode": "HZ-ETHANOL-01",
+      "applicantUsername": "student_lin",
+      "approverUsername": "admin",
+      "operatorUsername": "hazardous_wang",
+      "actionType": 4,
+      "batchNo": "HZ-ETH-202604",
+      "quantity": 1,
+      "remainingQuantity": 6,
+      "usageDate": "2026-06-18 17:20:00",
+      "purpose": "废液回收处理",
+      "projectName": "细胞培养结束清场",
+      "witnessName": "陈老师",
+      "usageStatus": 2,
+      "remarks": "来源：实验废液处理，林同学申请，王危化操作"
+    }
+  ]
+}

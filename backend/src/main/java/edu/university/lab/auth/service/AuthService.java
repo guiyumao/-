@@ -6,6 +6,8 @@ import edu.university.lab.auth.dto.LoginResponse;
 import edu.university.lab.auth.dto.RegisterRequest;
 import edu.university.lab.auth.dto.RegisterResponse;
 import edu.university.lab.auth.dto.UserProfile;
+import edu.university.lab.module.role.entity.Role;
+import java.util.List;
 
 public interface AuthService {
 
@@ -16,4 +18,6 @@ public interface AuthService {
     UserProfile currentUser();
 
     AuthContextResponse currentContext();
+
+    List<Role> availableRoles(String username);
 }

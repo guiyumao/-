@@ -32,16 +32,26 @@ export interface UserProfile {
     roleCodes: string[]
 }
 
+export interface AvailableRole {
+    id: number
+    roleCode: string
+    roleName: string
+    description?: string
+    status: number
+}
+
 export interface LoginResponse {
     token: string
     expireMinutes: number
     user: UserProfile
+    roleCode: string
     menus: MenuItem[]
     permissions: string[]
 }
 
 export interface AuthContextResponse {
     user: UserProfile
+    roleCode: string
     menus: MenuItem[]
     permissions: string[]
 }

@@ -1,50 +1,50 @@
 :root {
-    color-scheme: light;
-    --bg-page: #f4efe6;
-    --bg-page-alt: #e7eef0;
-    --bg-panel: rgba(255, 251, 245, 0.9);
-    --bg-panel-strong: rgba(252, 248, 241, 0.98);
-    --bg-sidebar: linear-gradient(180deg, #12252c 0%, #193844 58%, #224b57 100%);
-    --bg-sidebar-glow: radial-gradient(circle at top, rgba(229, 159, 93, 0.26), transparent 46%);
-    --text-main: #16313b;
-    --text-secondary: #5f7581;
-    --text-soft: #7f8f97;
-    --line-soft: rgba(21, 49, 59, 0.1);
-    --line-strong: rgba(21, 49, 59, 0.18);
-    --accent: #127f72;
-    --accent-deep: #0d665c;
-    --accent-strong: #bf5d3d;
-    --accent-gold: #d4a14c;
-    --success: #2f8f5b;
-    --warning: #c98723;
-    --danger: #cb543f;
-    --shadow-soft: 0 20px 50px rgba(17, 39, 47, 0.1);
-    --shadow-strong: 0 28px 60px rgba(17, 39, 47, 0.16);
+    color-scheme: dark;
+    --bg-page: #08111a;
+    --bg-page-alt: #0f1c28;
+    --bg-panel: rgba(13, 21, 33, 0.78);
+    --bg-panel-strong: rgba(10, 17, 27, 0.95);
+    --bg-sidebar: linear-gradient(180deg, #07121c 0%, #0b1b29 58%, #11283a 100%);
+    --bg-sidebar-glow: radial-gradient(circle at top, rgba(240, 190, 103, 0.2), transparent 48%);
+    --text-main: #eef4f8;
+    --text-secondary: #b1c0cd;
+    --text-soft: #8b9baa;
+    --line-soft: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.16);
+    --accent: #56c8b6;
+    --accent-deep: #31a697;
+    --accent-strong: #ea8e56;
+    --accent-gold: #f0be67;
+    --success: #5bc288;
+    --warning: #e4a33d;
+    --danger: #ea6f5f;
+    --shadow-soft: 0 22px 56px rgba(1, 9, 16, 0.42);
+    --shadow-strong: 0 34px 70px rgba(1, 9, 16, 0.56);
     --radius-xl: 30px;
     --radius-lg: 24px;
     --radius-md: 18px;
     --radius-sm: 12px;
-    --font-display: "Avenir Next", "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif;
-    --font-body: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-display: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-body: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
     --el-color-primary: var(--accent);
-    --el-color-primary-light-3: #4caa9f;
-    --el-color-primary-light-5: #80c3bb;
-    --el-color-primary-light-7: #b4ddd7;
-    --el-color-primary-light-9: #e7f5f2;
+    --el-color-primary-light-3: #76d5c8;
+    --el-color-primary-light-5: #9fdfd7;
+    --el-color-primary-light-7: #caece6;
+    --el-color-primary-light-9: rgba(86, 200, 182, 0.14);
     --el-color-primary-dark-2: var(--accent-deep);
-    --el-border-color-light: rgba(21, 49, 59, 0.12);
-    --el-border-color-lighter: rgba(21, 49, 59, 0.08);
+    --el-border-color-light: rgba(255, 255, 255, 0.12);
+    --el-border-color-lighter: rgba(255, 255, 255, 0.08);
     --el-border-radius-base: 14px;
-    --el-fill-color-blank: rgba(255, 255, 255, 0.82);
-    --el-bg-color: rgba(255, 255, 255, 0.75);
-    --el-bg-color-overlay: rgba(255, 251, 245, 0.96);
+    --el-fill-color-blank: rgba(9, 16, 25, 0.78);
+    --el-bg-color: rgba(10, 17, 27, 0.84);
+    --el-bg-color-overlay: rgba(13, 21, 33, 0.96);
     --el-text-color-primary: var(--text-main);
     --el-text-color-regular: var(--text-secondary);
     font-family: var(--font-body);
     color: var(--text-main);
     background:
-        radial-gradient(circle at top left, rgba(18, 127, 114, 0.16), transparent 30%),
-        radial-gradient(circle at right 8%, rgba(212, 161, 76, 0.2), transparent 26%),
+        radial-gradient(circle at top left, rgba(86, 200, 182, 0.18), transparent 28%),
+        radial-gradient(circle at right 8%, rgba(240, 190, 103, 0.18), transparent 26%),
         linear-gradient(180deg, var(--bg-page) 0%, var(--bg-page-alt) 100%);
 }
 
@@ -61,8 +61,8 @@ body,
 
 html {
     background:
-        radial-gradient(circle at top left, rgba(18, 127, 114, 0.16), transparent 30%),
-        radial-gradient(circle at right 8%, rgba(212, 161, 76, 0.2), transparent 26%),
+        radial-gradient(circle at top left, rgba(86, 200, 182, 0.18), transparent 28%),
+        radial-gradient(circle at right 8%, rgba(240, 190, 103, 0.18), transparent 26%),
         linear-gradient(180deg, var(--bg-page) 0%, var(--bg-page-alt) 100%);
 }
 
@@ -79,9 +79,9 @@ body::before {
     inset: 0;
     pointer-events: none;
     background:
-        linear-gradient(120deg, rgba(255, 255, 255, 0.2), transparent 40%),
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.24), transparent 28%);
-    opacity: 0.7;
+        linear-gradient(120deg, rgba(255, 255, 255, 0.05), transparent 40%),
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.04), transparent 28%);
+    opacity: 1;
 }
 
 a {
@@ -118,7 +118,7 @@ select {
     position: absolute;
     inset: 0 0 auto;
     height: 1px;
-    background: linear-gradient(90deg, rgba(18, 127, 114, 0.24), rgba(212, 161, 76, 0.24), transparent 80%);
+    background: linear-gradient(90deg, rgba(86, 200, 182, 0.24), rgba(240, 190, 103, 0.24), transparent 80%);
     pointer-events: none;
 }
 
@@ -158,9 +158,9 @@ select {
     gap: 10px;
     padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(18, 127, 114, 0.08);
-    border: 1px solid rgba(18, 127, 114, 0.14);
-    color: var(--accent-deep);
+    background: rgba(86, 200, 182, 0.08);
+    border: 1px solid rgba(86, 200, 182, 0.14);
+    color: var(--accent);
     font-size: 13px;
     font-weight: 700;
 }
@@ -227,14 +227,14 @@ select {
     min-height: 30px;
     padding: 0 12px;
     border-radius: 999px;
-    background: rgba(18, 127, 114, 0.08);
-    border: 1px solid rgba(18, 127, 114, 0.12);
+    background: rgba(86, 200, 182, 0.12);
+    border: 1px solid rgba(86, 200, 182, 0.18);
 }
 
 .data-code {
     font-family: "Consolas", "SFMono-Regular", monospace;
     font-size: 13px;
-    color: var(--accent-deep);
+    color: var(--accent);
 }
 
 .data-chip {
@@ -279,7 +279,7 @@ select {
 }
 
 .action-button.el-button--default {
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .metric-value {
@@ -294,8 +294,8 @@ select {
     gap: 8px;
     padding: 10px 14px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
     color: inherit;
 }
 
@@ -336,7 +336,7 @@ select {
 }
 
 .el-button--primary {
-    box-shadow: 0 14px 28px rgba(18, 127, 114, 0.18);
+    box-shadow: 0 14px 28px rgba(49, 166, 151, 0.2);
 }
 
 .el-button:hover {
@@ -360,13 +360,13 @@ select {
 }
 
 .el-table {
-    --el-table-border-color: rgba(21, 49, 59, 0.08);
-    --el-table-header-bg-color: rgba(18, 127, 114, 0.08);
-    --el-table-row-hover-bg-color: rgba(18, 127, 114, 0.06);
+    --el-table-border-color: rgba(255, 255, 255, 0.08);
+    --el-table-header-bg-color: rgba(86, 200, 182, 0.08);
+    --el-table-row-hover-bg-color: rgba(86, 200, 182, 0.06);
     --el-table-header-text-color: var(--text-main);
     border-radius: 18px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(7, 13, 20, 0.42);
 }
 
 .el-table th.el-table__cell {
@@ -392,7 +392,7 @@ select {
 }
 
 .el-table__body tr:nth-child(even) > td.el-table__cell {
-    background: rgba(248, 251, 250, 0.62);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .el-dialog {
@@ -417,12 +417,12 @@ select {
 }
 
 .el-pagination.is-background .el-pager li:not(.is-active) {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--text-secondary);
 }
 
 .el-pagination.is-background .el-pager li.is-active {
-    box-shadow: 0 10px 22px rgba(18, 127, 114, 0.2);
+    box-shadow: 0 10px 22px rgba(49, 166, 151, 0.22);
 }
 
 .el-tag {

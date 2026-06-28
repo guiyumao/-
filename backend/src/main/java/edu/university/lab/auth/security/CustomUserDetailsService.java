@@ -1,6 +1,7 @@
 package edu.university.lab.auth.security;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.module.role.entity.Role;
 import edu.university.lab.module.role.mapper.RoleMapper;
 import edu.university.lab.module.rolemenu.entity.RoleMenu;
@@ -35,27 +36,37 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return loadUserByUsernameAndRole(username, null);
+    }
+
+    public LoginUser loadUserByUsernameAndRole(String username, String activeRoleCode) throws UsernameNotFoundException {
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
             .eq(User::getUsername, username)
             .last("LIMIT 1"));
         if (user == null) {
-            throw new UsernameNotFoundException("User not found");
+            throw new UsernameNotFoundException(Messages.USER_NOT_FOUND);
         }
 
         List<UserRole> userRoles = userRoleMapper.selectList(new LambdaQueryWrapper<UserRole>()
             .eq(UserRole::getUserId, user.getId()));
-        List<String> roleCodes = userRoles.isEmpty()
+        List<Role> enabledRoles = userRoles.isEmpty()
             ? Collections.emptyList()
             : userRoles.stream()
                 .map(UserRole::getRoleId)
+                .distinct()
                 .map(roleMapper::selectById)
                 .filter(role -> role != null && role.getStatus() != null && role.getStatus() == 1)
-                .map(Role::getRoleCode)
                 .toList();
-        List<String> permissionCodes = userRoles.isEmpty()
+        List<String> roleCodes = enabledRoles.stream()
+            .map(Role::getRoleCode)
+            .toList();
+        List<Role> permissionRoles = activeRoleCode == null
+            ? enabledRoles
+            : enabledRoles.stream().filter(role -> activeRoleCode.equals(role.getRoleCode())).toList();
+        List<String> permissionCodes = permissionRoles.isEmpty()
             ? Collections.emptyList()
-            : userRoles.stream()
-                .map(UserRole::getRoleId)
+            : permissionRoles.stream()
+                .map(Role::getId)
                 .flatMap(roleId -> roleMenuMapper.selectList(new LambdaQueryWrapper<RoleMenu>()
                     .eq(RoleMenu::getRoleId, roleId))
                     .stream())
@@ -70,6 +81,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .filter(permission -> !permission.isBlank())
                 .distinct()
                 .toList();
-        return new LoginUser(user, roleCodes, permissionCodes);
+        if (activeRoleCode != null && !roleCodes.contains(activeRoleCode)) {
+            throw new UsernameNotFoundException(Messages.ROLE_NOT_AVAILABLE);
+        }
+        return new LoginUser(user, roleCodes, activeRoleCode, permissionCodes);
     }
 }

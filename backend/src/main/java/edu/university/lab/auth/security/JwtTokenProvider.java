@@ -40,6 +40,7 @@ public class JwtTokenProvider {
             .subject(loginUser.getUsername())
             .claim("uid", loginUser.getUser().getId())
             .claim("roles", loginUser.getRoleCodes())
+            .claim("activeRole", loginUser.getActiveRoleCode())
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plus(expireMinutes, ChronoUnit.MINUTES)))
             .signWith(secretKey)
@@ -54,6 +55,11 @@ public class JwtTokenProvider {
     public List<String> getRoles(String token) {
         Object roles = parseClaims(token).get("roles");
         return roles instanceof List<?> list ? (List<String>) list : List.of();
+    }
+
+    public String getActiveRole(String token) {
+        Object activeRole = parseClaims(token).get("activeRole");
+        return activeRole instanceof String role ? role : null;
     }
 
     public boolean validateToken(String token) {

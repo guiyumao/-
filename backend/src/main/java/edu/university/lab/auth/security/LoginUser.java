@@ -18,16 +18,21 @@ public class LoginUser implements UserDetails {
 
     private final List<String> roleCodes;
 
+    private final String activeRoleCode;
+
     private final List<String> permissionCodes;
 
     private final List<SimpleGrantedAuthority> authorities;
 
-    public LoginUser(User user, List<String> roleCodes, List<String> permissionCodes) {
+    public LoginUser(User user, List<String> roleCodes, String activeRoleCode, List<String> permissionCodes) {
         this.user = user;
         this.roleCodes = roleCodes;
+        this.activeRoleCode = activeRoleCode;
         this.permissionCodes = permissionCodes;
         this.authorities = java.util.stream.Stream.concat(
-                roleCodes.stream().map(code -> new SimpleGrantedAuthority("ROLE_" + code.toUpperCase())),
+                (activeRoleCode == null ? roleCodes : List.of(activeRoleCode))
+                    .stream()
+                    .map(code -> new SimpleGrantedAuthority("ROLE_" + code.toUpperCase())),
                 permissionCodes.stream().map(SimpleGrantedAuthority::new)
             )
             .toList();

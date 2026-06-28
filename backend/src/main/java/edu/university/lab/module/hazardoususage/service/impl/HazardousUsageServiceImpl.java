@@ -3,6 +3,7 @@ package edu.university.lab.module.hazardoususage.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import edu.university.lab.common.audit.AuditLog;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.common.service.BaseCrudService;
 import edu.university.lab.module.hazardoususage.entity.HazardousUsage;
@@ -39,7 +40,7 @@ public class HazardousUsageServiceImpl extends BaseCrudService<HazardousUsageMap
                 .eq(Inventory::getBatchNo, usage.getBatchNo())
                 .last("LIMIT 1"));
             if (inventory == null || inventory.getQuantity().compareTo(usage.getQuantity()) < 0) {
-                throw new IllegalStateException("Insufficient hazardous inventory");
+                throw new IllegalStateException(Messages.INSUFFICIENT_HAZARDOUS_INVENTORY);
             }
         }
         usage.setUsageStatus(2);

@@ -2,6 +2,7 @@ package edu.university.lab.module.hazardousmaterial.controller;
 
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.hazardousmaterial.entity.HazardousMaterial;
 import edu.university.lab.module.hazardousmaterial.service.HazardousMaterialService;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Hazardous Material")
+@Tag(name = "危化品")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/hazardous-materials")
@@ -45,7 +46,7 @@ public class HazardousMaterialController {
     @PreAuthorize("hasAuthority('hazardous_material:edit')")
     @PostMapping
     public ApiResponse<Boolean> create(@RequestBody HazardousMaterial entity) {
-        return ApiResponse.success("created", hazardousMaterialService.save(entity));
+        return ApiResponse.success(Messages.HAZARDOUS_CREATED, hazardousMaterialService.save(entity));
     }
 
     @Operation(summary = "更新危化品")
@@ -53,13 +54,13 @@ public class HazardousMaterialController {
     @PutMapping("/{id}")
     public ApiResponse<Boolean> update(@PathVariable Integer id, @RequestBody HazardousMaterial entity) {
         entity.setId(id);
-        return ApiResponse.success("updated", hazardousMaterialService.updateById(entity));
+        return ApiResponse.success(Messages.HAZARDOUS_UPDATED, hazardousMaterialService.updateById(entity));
     }
 
     @Operation(summary = "删除危化品")
     @PreAuthorize("hasAuthority('hazardous_material:edit')")
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Integer id) {
-        return ApiResponse.success("deleted", hazardousMaterialService.removeById(id));
+        return ApiResponse.success(Messages.HAZARDOUS_DELETED, hazardousMaterialService.removeById(id));
     }
 }

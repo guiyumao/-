@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties({OpenApiProperties.class, InitialAdminProperties.class})
+@EnableConfigurationProperties({OpenApiProperties.class, InitialAdminProperties.class, SampleDataProperties.class})
 public class OpenApiConfig {
 
     private final OpenApiProperties properties;

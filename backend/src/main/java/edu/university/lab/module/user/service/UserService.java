@@ -5,11 +5,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.user.dto.CreateUserRequest;
 import edu.university.lab.module.user.dto.UpdateUserRequest;
+import edu.university.lab.module.user.dto.UserListItem;
 import edu.university.lab.module.user.entity.User;
 
 public interface UserService extends IService<User> {
 
-    Page<User> pageQuery(PageQuery query);
+    Page<UserListItem> pageQuery(PageQuery query);
 
     boolean createUser(CreateUserRequest request);
 

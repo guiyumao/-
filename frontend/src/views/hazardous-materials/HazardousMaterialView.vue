@@ -7,8 +7,10 @@ import { computed, onMounted, ref } from 'vue'
 import CrudPage from '../shared/CrudPage.vue'
 import {
     fetchLaboratoryOptions,
+    firstOptionId,
     fetchUserOptions,
     optionsToMap,
+    type SelectOption,
 } from '../../api/modules/business'
 
 const laboratoryMap = ref<Record<string, string>>({})
@@ -50,8 +52,8 @@ const config = computed(() => ({
         { label: '存放位置', prop: 'storageLocation' },
     ],
     emptyRecord: () => ({
-        laboratoryId: 1,
-        managerUserId: 5,
+        laboratoryId: firstOptionId(laboratoryOptions.value) ?? 0,
+        managerUserId: firstOptionId(userOptions.value) ?? 0,
         hazardousCode: '',
         materialName: '',
         casNo: '',

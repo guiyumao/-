@@ -1,4 +1,4 @@
-import type { AuthContextResponse, LoginResponse, UserProfile } from '../../types/auth'
+import type { AuthContextResponse, AvailableRole, LoginResponse, UserProfile } from '../../types/auth'
 import { getResult, postResult } from '../http'
 
 export interface RegisterRequest {
@@ -27,8 +27,8 @@ export interface PublicLaboratoryOption {
     location?: string
 }
 
-export function login(username: string, password: string) {
-    return postResult<LoginResponse>('/auth/login', { username, password })
+export function login(username: string, password: string, roleCode: string) {
+    return postResult<LoginResponse>('/auth/login', { username, password, roleCode })
 }
 
 export function register(data: RegisterRequest) {
@@ -45,4 +45,8 @@ export function getAuthContext() {
 
 export function getPublicLaboratories() {
     return getResult<PublicLaboratoryOption[]>('/laboratories/public-options')
+}
+
+export function getAvailableRoles(username: string) {
+    return getResult<AvailableRole[]>('/auth/available-roles', { username })
 }

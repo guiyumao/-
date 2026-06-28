@@ -17,6 +17,8 @@ public class LoginResponse {
 
     private UserProfile user;
 
+    private String roleCode;
+
     private List<MenuItem> menus;
 
     private List<String> permissions;

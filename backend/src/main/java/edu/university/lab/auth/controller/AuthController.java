@@ -8,14 +8,17 @@ import edu.university.lab.auth.dto.RegisterResponse;
 import edu.university.lab.auth.dto.UserProfile;
 import edu.university.lab.auth.service.AuthService;
 import edu.university.lab.common.api.ApiResponse;
+import edu.university.lab.module.role.entity.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Authentication")
@@ -48,5 +51,11 @@ public class AuthController {
     @GetMapping("/context")
     public ApiResponse<AuthContextResponse> currentContext() {
         return ApiResponse.success(authService.currentContext());
+    }
+
+    @Operation(summary = "查询用户可登录角色")
+    @GetMapping("/available-roles")
+    public ApiResponse<List<Role>> availableRoles(@RequestParam(required = false, defaultValue = "") String username) {
+        return ApiResponse.success(authService.availableRoles(username));
     }
 }

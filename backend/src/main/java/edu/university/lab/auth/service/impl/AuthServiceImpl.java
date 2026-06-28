@@ -13,6 +13,7 @@ import edu.university.lab.auth.security.JwtTokenProvider;
 import edu.university.lab.auth.security.LoginUser;
 import edu.university.lab.auth.security.SecurityUtils;
 import edu.university.lab.auth.service.AuthService;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.constant.RoleConstants;
 import edu.university.lab.common.constant.UserConstants;
 import edu.university.lab.module.laboratory.entity.Laboratory;
@@ -60,13 +61,17 @@ public class AuthServiceImpl implements AuthService {
             new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        LoginUser loginUser = (LoginUser) customUserDetailsService.loadUserByUsername(request.getUsername());
+        LoginUser loginUser = customUserDetailsService.loadUserByUsernameAndRole(
+            request.getUsername(),
+            request.getRoleCode()
+        );
         String token = jwtTokenProvider.createToken(loginUser);
         return LoginResponse.builder()
             .token(token)
             .expireMinutes(jwtTokenProvider.getExpireMinutes())
             .user(toProfile(loginUser))
-            .menus(buildMenus(loginUser.getRoleCodes()))
+            .roleCode(loginUser.getActiveRoleCode())
+            .menus(buildMenus(List.of(loginUser.getActiveRoleCode())))
             .permissions(loginUser.getPermissionCodes())
             .build();
     }
@@ -82,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
             .eq(Role::getStatus, UserConstants.STATUS_ENABLED)
             .last("LIMIT 1"));
         if (role == null) {
-            throw new IllegalArgumentException("Registration role is not available");
+            throw new IllegalArgumentException(Messages.ROLE_NOT_AVAILABLE);
         }
 
         User user = new User();
@@ -107,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
             .username(user.getUsername())
             .realName(user.getRealName())
             .roleCode(roleCode)
-            .message("registered")
+            .message(Messages.REGISTER_SUCCESS)
             .build();
     }
 
@@ -125,27 +130,57 @@ public class AuthServiceImpl implements AuthService {
         }
         return AuthContextResponse.builder()
             .user(toProfile(loginUser))
-            .menus(buildMenus(loginUser.getRoleCodes()))
+            .roleCode(loginUser.getActiveRoleCode())
+            .menus(buildMenus(List.of(loginUser.getActiveRoleCode())))
             .permissions(loginUser.getPermissionCodes())
             .build();
+    }
+
+    public List<Role> availableRoles(String username) {
+        if (!StringUtils.hasText(username)) {
+            return roleMapper.selectList(new LambdaQueryWrapper<Role>()
+                .eq(Role::getStatus, UserConstants.STATUS_ENABLED)
+                .orderByAsc(Role::getId));
+        }
+
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+            .eq(User::getUsername, username)
+            .last("LIMIT 1"));
+        if (user == null) {
+            return List.of();
+        }
+
+        List<Integer> roleIds = userRoleMapper.selectList(new LambdaQueryWrapper<UserRole>()
+                .eq(UserRole::getUserId, user.getId()))
+            .stream()
+            .map(UserRole::getRoleId)
+            .distinct()
+            .toList();
+
+        return roleIds.isEmpty()
+            ? List.of()
+            : roleIds.stream()
+                .map(roleMapper::selectById)
+                .filter(role -> role != null && role.getStatus() != null && role.getStatus() == UserConstants.STATUS_ENABLED)
+                .toList();
     }
 
     private void validateRegisterRequest(RegisterRequest request) {
         Laboratory laboratory = laboratoryMapper.selectById(request.getLaboratoryId());
         if (laboratory == null || laboratory.getStatus() == null || laboratory.getStatus() != UserConstants.STATUS_ENABLED) {
-            throw new IllegalArgumentException("Laboratory is unavailable");
+            throw new IllegalArgumentException(Messages.LABORATORY_UNAVAILABLE);
         }
         if (existsUser(User::getUsername, request.getUsername().trim())) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new IllegalArgumentException(Messages.USERNAME_EXISTS);
         }
         if (existsUser(User::getUserNo, request.getUserNo().trim())) {
-            throw new IllegalArgumentException("User number already exists");
+            throw new IllegalArgumentException(Messages.USER_NO_EXISTS);
         }
         if (StringUtils.hasText(request.getPhone()) && existsUser(User::getPhone, request.getPhone().trim())) {
-            throw new IllegalArgumentException("Phone already exists");
+            throw new IllegalArgumentException(Messages.PHONE_EXISTS);
         }
         if (StringUtils.hasText(request.getEmail()) && existsUser(User::getEmail, request.getEmail().trim())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalArgumentException(Messages.EMAIL_EXISTS);
         }
     }
 

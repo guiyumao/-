@@ -7,10 +7,10 @@
             </div>
 
             <div class="table-tools category-tools">
-                <el-input v-model="query.keyword" placeholder="请输入关键字" clearable class="category-search" />
+                <el-input v-model="query.keyword" :placeholder="uiText.keywordPlaceholder" clearable class="category-search" />
                 <el-button @click="loadData">查询</el-button>
                 <el-button v-if="canCreate" type="primary" @click="handleCreate">
-                    {{ config.createText || '新增分类' }}
+                    {{ config.createText || uiText.defaultCategoryCreateText }}
                 </el-button>
             </div>
         </section>
@@ -18,13 +18,13 @@
         <section class="card-panel surface-highlight table-shell">
             <div class="table-head">
                 <div class="table-head-title">
-                    <div class="eyebrow">Records</div>
-                    <h3>分类卡片</h3>
-                    <p>每个分类独立成卡片，对应的设备或耗材会直接展示在当前分类下。</p>
+                    <div class="eyebrow">{{ uiText.recordEyebrow }}</div>
+                    <h3>{{ uiText.categoryCardTitle }}</h3>
+                    <p>{{ uiText.categoryCardDescription }}</p>
                 </div>
                 <div class="table-meta">
                     <div class="count-badge">
-                        <span>当前记录</span>
+                        <span>{{ uiText.currentRecords }}</span>
                         <strong>{{ query.total }}</strong>
                     </div>
                     <div class="table-summary">共 {{ query.total }} 条记录</div>
@@ -41,8 +41,8 @@
                     </div>
 
                     <div class="category-card-main">
-                        <h4>{{ String(record[config.nameProp] ?? '未命名分类') }}</h4>
-                        <p>{{ String(record[config.descriptionProp] ?? '暂无分类说明。') }}</p>
+                        <h4>{{ String(record[config.nameProp] ?? uiText.unnamedCategory) }}</h4>
+                        <p>{{ String(record[config.descriptionProp] ?? uiText.emptyCategoryDescription) }}</p>
                     </div>
 
                     <section class="category-related">
@@ -91,7 +91,7 @@
                         </div>
 
                         <p v-else class="category-related-empty">
-                            {{ config.relation.emptyText || '当前分类下暂无记录。' }}
+                            {{ config.relation.emptyText || uiText.emptyCategoryRecords }}
                         </p>
                     </section>
 
@@ -236,6 +236,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { createOne, deleteOne, fetchPage, updateOne } from '../../api/crud'
+import { uiText } from '../../constants/uiText'
 import { useAuthStore } from '../../stores/auth'
 import type { CrudColumn, CrudModuleConfig } from '../../types/crud'
 import { emitCrudSync, useCrudSync } from '../../utils/crudSync'
@@ -405,7 +406,7 @@ async function loadData() {
             relatedRecords.value = await loadPagedRecords(props.config.relation.endpoint, relationPageSize)
         } catch (error) {
             relatedRecords.value = []
-            ElMessage.error('分类已刷新，但关联记录同步失败，请稍后重试')
+            ElMessage.error(uiText.categoryRelatedSyncFailed)
             console.error('Failed to load category related records', error)
         }
     } finally {
@@ -449,10 +450,10 @@ async function handleSave() {
     try {
         if (editingId.value) {
             await updateOne(props.config.endpoint, editingId.value, formModel)
-            ElMessage.success('更新成功')
+            ElMessage.success(uiText.updateSuccess)
         } else {
             await createOne(props.config.endpoint, formModel)
-            ElMessage.success('创建成功')
+            ElMessage.success(uiText.createSuccess)
         }
 
         dialogVisible.value = false
@@ -472,7 +473,7 @@ async function handleRelatedSave() {
     relatedSaving.value = true
     try {
         await updateOne(props.config.relation.editor.endpoint, relatedEditingId.value, relatedFormModel)
-        ElMessage.success('更新成功')
+        ElMessage.success(uiText.updateSuccess)
         relatedDialogVisible.value = false
         resetRelatedForm()
         await loadData()
@@ -488,7 +489,7 @@ async function handleDelete(id: number) {
     }
 
     await deleteOne(props.config.endpoint, id)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText.deleteSuccess)
     await loadData()
     emitCrudSync(categorySyncKeys, syncSource)
 }
@@ -499,7 +500,7 @@ async function handleRelatedDelete(id: number) {
     }
 
     await deleteOne(props.config.relation.editor.endpoint, id)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText.deleteSuccess)
     await loadData()
     emitCrudSync(relatedSyncKeys, syncSource)
 }

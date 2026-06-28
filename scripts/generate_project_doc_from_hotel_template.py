@@ -1,0 +1,532 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from docx import Document
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Cm, Pt, RGBColor
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DOCS_DIR = ROOT / "docs"
+ASSET_DIR = DOCS_DIR / "generated_assets"
+OUTPUT_DOCX = DOCS_DIR / "实验室设备与耗材管理系统设计说明书.docx"
+
+USECASE_IMAGE = ASSET_DIR / "reference_style_role_usecase_flow.png"
+ER_IMAGE = ASSET_DIR / "system_er_diagram_chinese.png"
+
+
+def set_run_font(run, size: float = 12, bold: bool = False, color: RGBColor | None = None) -> None:
+    run.font.name = "Times New Roman"
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+    run.font.size = Pt(size)
+    run.bold = bold
+    if color:
+        run.font.color.rgb = color
+
+
+def set_document_style(doc: Document) -> None:
+    normal = doc.styles["Normal"]
+    normal.font.name = "Times New Roman"
+    normal._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+    normal.font.size = Pt(12)
+    for style_name in ("Heading 1", "Heading 2", "Heading 3"):
+        style = doc.styles[style_name]
+        style.font.name = "Times New Roman"
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), "黑体")
+
+
+def add_heading(doc: Document, text: str, level: int = 2) -> None:
+    p = doc.add_paragraph()
+    p.style = f"Heading {level}"
+    run = p.add_run(text)
+    run.font.name = "Times New Roman"
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "黑体")
+    run.bold = True
+    run.font.size = Pt(16 if level == 1 else 14 if level == 2 else 12)
+    run.font.color.rgb = RGBColor(31, 78, 121)
+
+
+def add_para(doc: Document, text: str, first_line: bool = True, size: float = 12) -> None:
+    p = doc.add_paragraph()
+    p.paragraph_format.line_spacing = 1.35
+    if first_line:
+        p.paragraph_format.first_line_indent = Cm(0.74)
+    run = p.add_run(text)
+    set_run_font(run, size=size)
+
+
+def add_center(doc: Document, text: str, size: float = 11, bold: bool = False) -> None:
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(text)
+    set_run_font(run, size=size, bold=bold)
+
+
+def shade_cell(cell, fill: str) -> None:
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:fill"), fill)
+    tc_pr.append(shd)
+
+
+def set_cell(cell, text: str, bold: bool = False, center: bool = False, fill: str | None = None) -> None:
+    cell.text = ""
+    p = cell.paragraphs[0]
+    if center:
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(text)
+    set_run_font(run, size=10.5, bold=bold)
+    cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    if fill:
+        shade_cell(cell, fill)
+
+
+def add_table(doc: Document, rows: list[list[str]], header_fill: str = "D9EAF7") -> None:
+    if not rows:
+        return
+    table = doc.add_table(rows=len(rows), cols=len(rows[0]))
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for i, row in enumerate(rows):
+        for j, value in enumerate(row):
+            set_cell(table.cell(i, j), value, bold=i == 0, center=i == 0, fill=header_fill if i == 0 else None)
+    doc.add_paragraph("")
+
+
+def add_code(doc: Document, code: str) -> None:
+    for line in code.strip().splitlines():
+        p = doc.add_paragraph()
+        p.paragraph_format.left_indent = Cm(0.6)
+        run = p.add_run(line)
+        run.font.name = "Consolas"
+        run._element.rPr.rFonts.set(qn("w:eastAsia"), "等线")
+        run.font.size = Pt(9.5)
+
+
+def add_cover(doc: Document) -> None:
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run("AI 时代软件开发课程设计")
+    set_run_font(run, size=22, bold=True)
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "黑体")
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run("项目组协作设计文档")
+    set_run_font(run, size=20, bold=True)
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "黑体")
+
+    doc.add_paragraph("")
+    info = [
+        ["课程名称", "数据库原理与应用", "提交日期", "2026年6月27日"],
+        ["系统名称", "实验室设备与耗材管理系统", "", ""],
+        ["姓名", "卫德翔", "学号", "202400406103"],
+        ["班级", "软件243", "指导教师", ""],
+        ["技术栈", "Spring Boot 3 / Vue 3 / MySQL 8 / Redis 7", "", ""],
+    ]
+    add_table(doc, info, header_fill="FCE4D6")
+
+    members = [
+        ["角色", "姓名", "学号", "班级"],
+        ["统筹者 D", "卫德翔", "202400406103", "软件243"],
+        ["成员 A", "", "", ""],
+        ["成员 B", "", "", ""],
+        ["成员 C", "", "", ""],
+    ]
+    add_table(doc, members, header_fill="D9EAD3")
+
+    add_heading(doc, "文档说明", 2)
+    add_para(
+        doc,
+        "本文档参照样板《酒店管理设计说明书》的组织方式，按照“需求分析 → 数据库设计 → 框架搭建 → 模块开发 → 集成测试”的课程设计流程展开。文档内容面向高校实验室设备、耗材和危化品管理场景，重点说明系统边界、角色职责、用例流程、概念结构、逻辑表设计、数据库对象设计和测试关注点。",
+    )
+    add_para(doc, "黄色背景 = 学生填写区        蓝色背景 = 说明区        橙色 = 统筹者负责", first_line=False)
+    doc.add_page_break()
+
+
+def add_step_intro(doc: Document) -> None:
+    table = doc.add_table(rows=1, cols=2)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    set_cell(table.cell(0, 0), "STEP\n01", bold=True, center=True, fill="D9EAF7")
+    set_cell(table.cell(0, 1), "需求分析\n用例图 + 用例说明书，明确系统边界和业务流程", bold=True, fill="EAF4FF")
+    doc.add_paragraph("")
+
+
+def add_requirements(doc: Document) -> None:
+    add_heading(doc, "1.1  系统描述", 2)
+    add_para(
+        doc,
+        "实验室设备与耗材管理系统是面向高校实验室日常教学、科研和安全管理的信息管理系统。系统围绕设备、耗材、危化品、库存、借还、维修、校准、提醒、报表和权限控制等核心业务建立统一数据平台，解决传统实验室资产分散、库存不透明、危化品追踪困难、审批链条不完整和操作记录不可追溯等问题。",
+    )
+    add_para(
+        doc,
+        "本项目采用前后端分离架构：后端使用 Spring Boot 3、Spring Security、JWT 和 MyBatis-Plus，前端使用 Vue 3、TypeScript、Element Plus 和 ECharts，数据库使用 MySQL 8，缓存使用 Redis 7。系统支持 RBAC 权限控制，细化到菜单级与按钮级权限。",
+    )
+
+    add_heading(doc, "1、系统功能", 2)
+    add_para(doc, "系统功能按业务范围划分为基础资料、设备业务、耗材业务、危化品业务、库存提醒、报表审计和系统权限七类。")
+    add_table(
+        doc,
+        [
+            ["模块", "功能说明"],
+            ["登录认证", "用户名密码登录、JWT 鉴权、登录状态恢复、密码修改"],
+            ["权限管理", "用户、角色、菜单、按钮权限控制，支持系统管理员、实验室主任、教师、学生及专项管理员"],
+            ["实验室管理", "实验室基础信息、负责人、安全等级、状态管理"],
+            ["设备管理", "设备分类、设备台账、状态维护、校准周期维护、借还和维修联动"],
+            ["耗材管理", "耗材分类、耗材台账、安全库存、有效期、入库和出库"],
+            ["危化品管理", "CAS 编号、危险类别、MSDS 编号、储存位置、领用、归还和废液处理"],
+            ["库存管理", "统一库存、批次库存、库存数量校验、安全库存预警、过期预警"],
+            ["通知提醒", "设备逾期催还、设备校准到期、耗材临期/过期提醒"],
+            ["报表统计", "设备借用、维修、校准、耗材出库、危化品使用统计和 CSV 导出"],
+            ["审计日志", "关键业务操作记录、模块名称、操作类型、业务主键、操作时间和状态"],
+        ],
+    )
+
+    add_heading(doc, "2．数据库设计要求", 2)
+    for idx, item in enumerate(
+        [
+        "需求分析可在基础业务信息上适当扩展，覆盖设备、耗材、危化品、库存和权限控制等核心场景。",
+        "根据需求抽象实体与联系，采用 Chen Notation 绘制系统整体实体-联系图（E-R 图）。",
+        "数据库逻辑设计中应落实主键、外键、非空、唯一、缺省、检查约束和逻辑删除字段。",
+        "数据库物理设计应结合高频查询创建必要索引，避免盲目过度索引影响写入性能。",
+        "根据系统功能创建视图、存储过程和触发器，提高查询复用性并保证设备状态和库存数量一致。",
+        "形成可复用 SQL 脚本，便于初始化数据库结构、菜单权限、触发器和视图。",
+        ],
+        start=1,
+    ):
+        add_para(doc, f"（{idx}）{item}", first_line=False)
+
+    add_heading(doc, "3.SQL Server数据库对象设计", 2)
+    add_para(
+        doc,
+        "本项目实际数据库采用 MySQL 8。为贴合课程样板，本节仍按“视图、存储过程、触发器”的数据库对象设计思路展开，重点体现数据库层面对核心业务查询、库存扣减和设备状态联动的支持。",
+    )
+
+
+def add_usecases(doc: Document) -> None:
+    add_heading(doc, "1.2  用例图", 2)
+    add_para(doc, "下图按样板用例图形式绘制，展示系统中学生、教师、实验室主任、设备管理员、耗材管理员、危化品管理员、维修人员、校准人员和系统管理员的主要用例及流程关系。")
+    if USECASE_IMAGE.exists():
+        doc.add_picture(str(USECASE_IMAGE), width=Cm(16.2))
+        doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        add_center(doc, "图1 多角色用例流程说明图")
+
+    add_heading(doc, "1.2  用例说明书", 2)
+    usecases = [
+        [
+            "设备借用与归还",
+            "教师、学生、实验室主任、设备管理员",
+            "借用人已登录；设备状态为可用；具备借用权限。",
+            "借用申请生成，审批通过后设备状态更新为借出，归还后恢复为可用。",
+            "选择设备 → 填写用途和时间 → 系统校验设备状态 → 主任审批 → 设备管理员确认借出 → 归还验收。",
+            "设备不可用、时间不合法、审批拒绝、归还发现损坏时进入异常处理或维修流程。",
+        ],
+        [
+            "耗材入库与出库",
+            "教师、学生、实验室主任、耗材管理员",
+            "耗材分类和台账已维护；申请人具备申领权限；管理员具备入出库权限。",
+            "入库生成批次库存；出库扣减库存；库存不足或临期触发预警。",
+            "耗材管理员登记入库 → 申请人提交申领 → 系统校验批次库存 → 主任审批 → 管理员确认出库。",
+            "数量为 0、库存不足、批次过期、审批拒绝时系统阻止出库或记录拒绝原因。",
+        ],
+        [
+            "危化品使用",
+            "教师、学生、实验室主任、危化品管理员",
+            "危化品台账和库存批次已维护；申请人具备危化品申请权限；学生需绑定指导教师。",
+            "系统保存领用、归还或废液处理记录，更新库存并保留审批人、操作人和复核人。",
+            "申请人选择危化品和批次 → 填写用途和数量 → 主任审批 → 管理员登记领用 → 双人复核 → 余量归还或废液处理。",
+            "库存不足、缺少复核人、安全资质不满足或数量非法时禁止完成领用。",
+        ],
+        [
+            "设备维修",
+            "教师、学生、设备管理员、维修人员、实验室主任",
+            "设备未报废；报修人已登录；设备台账存在。",
+            "生成维修记录，维修中设备状态更新，维修完成后验收并恢复或停用。",
+            "报修人提交故障 → 设备管理员确认 → 派单给维修人员 → 记录过程和费用 → 主任验收。",
+            "设备已在维修中、结束时间早于开始时间、无法修复时进入异常流程。",
+        ],
+        [
+            "设备校准",
+            "实验室主任、校准人员、设备管理员",
+            "设备存在校准周期配置；校准人员或主任具备记录维护权限。",
+            "生成校准记录，更新最近校准日期、下次校准日期和设备状态。",
+            "创建校准任务 → 校准人员登记证书编号、日期和结果 → 主任确认 → 系统更新设备台账。",
+            "证书编号重复、有效期早于校准日期或设备报废时禁止保存。",
+        ],
+        [
+            "权限与审计管理",
+            "系统管理员",
+            "系统管理员已登录，具备用户、角色和菜单权限。",
+            "用户角色和菜单权限配置生效，系统保留关键操作日志。",
+            "新增用户 → 分配角色 → 授权菜单和按钮 → 查看系统日志 → 必要时调整权限。",
+            "角色权限配置错误会导致访问受限，需通过审计日志定位问题并修正。",
+        ],
+    ]
+    for idx, case in enumerate(usecases, start=1):
+        add_para(doc, f"表{idx}. “{case[0]}”用例", first_line=False)
+        add_table(
+            doc,
+            [
+                ["项目", "内容"],
+                ["用例名称", case[0]],
+                ["参与者", case[1]],
+                ["前置条件", case[2]],
+                ["后置条件", case[3]],
+                ["基本事件流", case[4]],
+                ["异常事件流", case[5]],
+                ["用例关系", "包含用户登录、权限校验、业务状态校验；扩展审计日志、通知提醒和报表统计。"],
+            ],
+        )
+
+
+def add_database_design(doc: Document) -> None:
+    add_heading(doc, "2.1  实体提取与关系确定", 2)
+    entities = [
+        ["实体", "说明", "主要属性"],
+        ["用户 user", "系统登录与业务责任主体", "id、laboratory_id、username、real_name、user_type、status"],
+        ["角色 role", "权限身份定义", "id、role_code、role_name、status"],
+        ["菜单 menu", "菜单和按钮权限", "id、parent_id、menu_code、menu_name、menu_type、path"],
+        ["实验室 laboratory", "实验室组织与安全信息", "id、director_user_id、laboratory_code、laboratory_name、safety_level"],
+        ["设备 equipment", "设备资产台账", "id、laboratory_id、category_id、equipment_code、equipment_name、status"],
+        ["耗材 consumable", "耗材台账", "id、laboratory_id、category_id、consumable_code、name、safe_stock"],
+        ["危化品 hazardous_material", "危化品安全台账", "id、laboratory_id、hazardous_code、CAS_no、danger_class、storage_location"],
+        ["库存 inventory", "耗材和危化品批次库存", "id、laboratory_id、item_type、item_id、batch_no、quantity、warning_status"],
+        ["设备借用 equipment_borrow", "设备借还流水", "id、equipment_id、borrower_user_id、approver_user_id、borrow_status"],
+        ["设备维修 equipment_repair", "维修处理记录", "id、equipment_id、reporter_user_id、repair_user_id、repair_status"],
+        ["设备校准 equipment_calibration", "校准证书与结果", "id、equipment_id、calibration_user_id、certificate_no、valid_until"],
+        ["耗材入库 consumable_inbound", "耗材采购入库记录", "id、consumable_id、operator_user_id、batch_no、quantity"],
+        ["耗材出库 consumable_outbound", "耗材申领和出库记录", "id、consumable_id、applicant_user_id、approver_user_id、operator_user_id"],
+        ["危化品使用 hazardous_usage", "危化品领用、归还、废液处理", "id、hazardous_material_id、applicant_user_id、approver_user_id、operator_user_id"],
+        ["系统日志 system_log", "关键操作审计", "id、user_id、module_name、operation_type、operation_time"],
+    ]
+    add_para(doc, "表2.1 实体清单表：", first_line=False)
+    add_table(doc, entities)
+
+    relations = [
+        ["实体 A", "实体 B", "联系", "基数", "实现方式"],
+        ["用户", "角色", "拥有/被分配", "M:N", "user_role 中间表"],
+        ["角色", "菜单", "授权", "M:N", "role_menu 中间表"],
+        ["实验室", "用户", "包含", "1:N", "user.laboratory_id"],
+        ["实验室", "设备/耗材/危化品", "拥有", "1:N", "laboratory_id 外键"],
+        ["设备", "设备借用/维修/校准", "产生业务记录", "1:N", "equipment_id 外键"],
+        ["耗材", "耗材入库/耗材出库", "产生出入库记录", "1:N", "consumable_id 外键"],
+        ["危化品", "危化品使用", "产生使用记录", "1:N", "hazardous_material_id 外键"],
+        ["耗材/危化品", "库存", "形成批次库存", "1:N", "item_type + item_id"],
+        ["用户", "系统日志", "产生日志", "1:N", "system_log.user_id"],
+    ]
+    add_para(doc, "表2.2 实体关系表：", first_line=False)
+    add_table(doc, relations)
+    add_para(doc, "统计汇总：核心实体 17 类；一对多关系覆盖实验室、资产、库存和业务流水；多对多关系主要体现在用户-角色、角色-菜单两组权限关系。", first_line=False)
+
+    add_heading(doc, "2.2  ER 图与基本表定义", 2)
+    add_para(doc, "E-R图：", first_line=False)
+    if ER_IMAGE.exists():
+        doc.add_picture(str(ER_IMAGE), width=Cm(16.5))
+        doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        add_center(doc, "图2 系统总体 E-R 图（Chen 模型）")
+
+    add_para(doc, "各基础表定义如下：", first_line=False)
+    table_defs = [
+        ["2.3 用户（user）", "id BIGINT PK；laboratory_id BIGINT FK；username VARCHAR(50) UK；password_hash VARCHAR(255)；real_name VARCHAR(50)；user_type TINYINT；status TINYINT"],
+        ["2.4 角色（role）", "id BIGINT PK；role_code VARCHAR(50) UK；role_name VARCHAR(50)；description VARCHAR(255)；status TINYINT"],
+        ["2.5 菜单（menu）", "id BIGINT PK；parent_id BIGINT FK；menu_code VARCHAR(100) UK；menu_name VARCHAR(100)；path VARCHAR(255)；menu_type TINYINT"],
+        ["2.6 实验室（laboratory）", "id BIGINT PK；director_user_id BIGINT FK；laboratory_code VARCHAR(50) UK；laboratory_name VARCHAR(100)；location VARCHAR(100)；safety_level TINYINT"],
+        ["2.7 设备（equipment）", "id BIGINT PK；laboratory_id BIGINT FK；category_id BIGINT FK；equipment_code VARCHAR(50) UK；equipment_name VARCHAR(100)；status TINYINT；calibration_cycle_days INT"],
+        ["2.8 耗材（consumable）", "id BIGINT PK；laboratory_id BIGINT FK；category_id BIGINT FK；consumable_code VARCHAR(50) UK；name VARCHAR(100)；unit VARCHAR(20)；safe_stock DECIMAL"],
+        ["2.9 危化品（hazardous_material）", "id BIGINT PK；laboratory_id BIGINT FK；hazardous_code VARCHAR(50) UK；CAS_no VARCHAR(50)；danger_class VARCHAR(50)；storage_location VARCHAR(100)"],
+        ["2.10 库存（inventory）", "id BIGINT PK；laboratory_id BIGINT FK；item_type TINYINT；item_id BIGINT；batch_no VARCHAR(50)；quantity DECIMAL；expiry_date DATE；warning_status TINYINT"],
+        ["2.11 设备借用（equipment_borrow）", "id BIGINT PK；equipment_id BIGINT FK；borrower_user_id BIGINT FK；approver_user_id BIGINT FK；borrow_time DATETIME；due_date DATETIME；borrow_status TINYINT"],
+        ["2.12 设备维修（equipment_repair）", "id BIGINT PK；equipment_id BIGINT FK；reporter_user_id BIGINT FK；repair_user_id BIGINT FK；repair_status TINYINT；repair_cost DECIMAL"],
+        ["2.13 设备校准（equipment_calibration）", "id BIGINT PK；equipment_id BIGINT FK；calibration_user_id BIGINT FK；certificate_no VARCHAR(100) UK；calibration_date DATE；valid_until DATE"],
+        ["2.14 耗材入库（consumable_inbound）", "id BIGINT PK；consumable_id BIGINT FK；operator_user_id BIGINT FK；batch_no VARCHAR(50)；quantity DECIMAL；unit_price DECIMAL"],
+        ["2.15 耗材出库（consumable_outbound）", "id BIGINT PK；consumable_id BIGINT FK；applicant_user_id BIGINT FK；approver_user_id BIGINT FK；operator_user_id BIGINT FK；quantity DECIMAL"],
+        ["2.16 危化品使用（hazardous_usage）", "id BIGINT PK；hazardous_material_id BIGINT FK；applicant_user_id BIGINT FK；approver_user_id BIGINT FK；operator_user_id BIGINT FK；action_type TINYINT；quantity DECIMAL"],
+        ["2.17 系统日志（system_log）", "id BIGINT PK；user_id BIGINT FK；module_name VARCHAR(100)；operation_type VARCHAR(50)；business_key VARCHAR(100)；operation_time DATETIME"],
+    ]
+    add_table(doc, [["表名", "字段定义摘要"], *table_defs])
+
+
+def add_physical_and_sql(doc: Document) -> None:
+    add_heading(doc, "2.3  数据库物理设计", 2)
+    add_para(doc, "数据库物理设计：为高频查询表创建适当索引。系统业务流水表数据增长快，应优先为状态、日期、批次和业务外键建立索引。")
+    indexes = [
+        ["序号", "表", "索引字段", "类型", "设计理由"],
+        ["1", "equipment", "equipment_code", "唯一索引", "设备编码唯一，常用于扫码和台账检索"],
+        ["2", "equipment", "status", "普通索引", "设备借用页面频繁按可用/维修/校准状态筛选"],
+        ["3", "equipment_borrow", "laboratory_id, borrow_status, due_date", "复合索引", "支持实验室维度下的借用审批、逾期催还和状态统计"],
+        ["4", "inventory", "item_type, item_id, batch_no", "复合索引", "保证耗材和危化品按批次快速定位库存"],
+        ["5", "inventory", "warning_status, expiry_date", "复合索引", "用于库存预警和临期过期提醒"],
+        ["6", "hazardous_usage", "hazardous_material_id, action_type, usage_date", "复合索引", "支持危化品按种类、动作和日期追溯"],
+    ]
+    add_table(doc, indexes)
+    add_code(
+        doc,
+        """
+CREATE UNIQUE INDEX idx_equipment_code ON equipment(equipment_code);
+CREATE INDEX idx_equipment_status ON equipment(status);
+CREATE INDEX idx_borrow_lab_status_due ON equipment_borrow(laboratory_id, borrow_status, due_date);
+CREATE INDEX idx_inventory_item_batch ON inventory(item_type, item_id, batch_no);
+CREATE INDEX idx_inventory_warning_expiry ON inventory(warning_status, expiry_date);
+CREATE INDEX idx_hazard_usage_trace ON hazardous_usage(hazardous_material_id, action_type, usage_date);
+        """,
+    )
+
+    add_heading(doc, "2.4  SQL Server数据库对象设计", 2)
+    add_para(doc, "1. 创建视图（v_equipment_borrow_status）", first_line=False)
+    add_para(doc, "设备借用页面和报表中心需要同时展示设备、实验室、借用人、审批人和借用状态，使用视图封装多表联查，减少前后端重复 SQL。")
+    add_code(
+        doc,
+        """
+CREATE VIEW v_equipment_borrow_status AS
+SELECT b.id, e.equipment_name, l.laboratory_name,
+       u.real_name AS borrower_name,
+       a.real_name AS approver_name,
+       b.borrow_time, b.due_date, b.return_time, b.borrow_status
+FROM equipment_borrow b
+LEFT JOIN equipment e ON b.equipment_id = e.id
+LEFT JOIN laboratory l ON b.laboratory_id = l.id
+LEFT JOIN user u ON b.borrower_user_id = u.id
+LEFT JOIN user a ON b.approver_user_id = a.id;
+        """,
+    )
+    add_para(doc, "2. 创建存储过程（sp_consumable_outbound）", first_line=False)
+    add_para(doc, "耗材出库需要校验批次库存是否足够，出库成功后扣减库存。封装为存储过程可统一库存校验规则，避免不同业务入口重复实现。")
+    add_code(
+        doc,
+        """
+DELIMITER //
+CREATE PROCEDURE sp_consumable_outbound(
+    IN p_consumable_id BIGINT,
+    IN p_batch_no VARCHAR(50),
+    IN p_quantity DECIMAL(12,2)
+)
+BEGIN
+    IF (SELECT quantity FROM inventory
+        WHERE item_type = 1 AND item_id = p_consumable_id AND batch_no = p_batch_no) < p_quantity THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '库存不足';
+    END IF;
+    UPDATE inventory
+    SET quantity = quantity - p_quantity, last_stock_out_time = NOW()
+    WHERE item_type = 1 AND item_id = p_consumable_id AND batch_no = p_batch_no;
+END //
+DELIMITER ;
+        """,
+    )
+    add_para(doc, "3. 创建触发器（trg_after_equipment_borrow）", first_line=False)
+    add_para(doc, "设备借用记录生成后需要自动修改设备状态，防止同一设备被重复借用。使用触发器可在数据库层面保障设备状态一致性。")
+    add_code(
+        doc,
+        """
+DELIMITER //
+CREATE TRIGGER trg_after_equipment_borrow
+AFTER INSERT ON equipment_borrow
+FOR EACH ROW
+BEGIN
+    UPDATE equipment SET status = 2 WHERE id = NEW.equipment_id;
+END //
+DELIMITER ;
+        """,
+    )
+    add_para(doc, "4. 查询某个用户在某个时间段的设备借用信息。", first_line=False)
+    add_code(
+        doc,
+        """
+SELECT *
+FROM v_equipment_borrow_status
+WHERE borrower_name = '张三'
+  AND borrow_time BETWEEN '2026-01-01' AND '2026-12-31';
+        """,
+    )
+    add_para(doc, "5. 分别查询本月耗材出库数量和出库金额。", first_line=False)
+    add_code(
+        doc,
+        """
+SELECT SUM(quantity) AS 本月出库数量,
+       SUM(total_amount) AS 本月出库金额
+FROM consumable_outbound
+WHERE DATE_FORMAT(outbound_date, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m');
+        """,
+    )
+
+
+def add_later_steps(doc: Document) -> None:
+    doc.add_page_break()
+    add_heading(doc, "STEP 03  框架搭建", 1)
+    add_para(doc, "系统采用 MVC 三层架构和前后端分离开发方式。后端 Controller 层提供 REST API，Service 层处理业务校验、审批和库存联动，Mapper 层使用 MyBatis-Plus 访问 MySQL。前端以 Vue 3 页面组件组织业务界面，通过 Axios 调用后端接口。")
+    add_table(
+        doc,
+        [
+            ["层次", "主要内容"],
+            ["表现层", "Vue 3、TypeScript、Element Plus、ECharts，负责列表、表单、图表和权限按钮展示"],
+            ["控制层", "Spring Boot Controller，负责参数接收、鉴权和统一响应"],
+            ["业务层", "设备借还、耗材出入库、危化品使用、维修校准、提醒报表等 Service"],
+            ["持久层", "MyBatis-Plus Mapper、XML SQL、视图、存储过程和触发器"],
+            ["安全层", "Spring Security、JWT、RBAC 菜单和按钮权限"],
+        ],
+    )
+
+    add_heading(doc, "STEP 04  模块开发", 1)
+    modules = [
+        ["模块", "前端页面", "后端服务"],
+        ["登录认证", "login.vue", "AuthController、JwtService"],
+        ["设备管理", "equipment/list.vue、borrow.vue、repair.vue、calibration.vue", "EquipmentService、BorrowService、RepairService、CalibrationService"],
+        ["耗材管理", "consumable/list.vue、inbound.vue、outbound.vue", "ConsumableService、InventoryService"],
+        ["危化品管理", "hazardous/list.vue、usage.vue", "HazardousService、HazardousUsageService"],
+        ["报表与提醒", "dashboard.vue、report.vue、reminder.vue", "DashboardService、ReportService、ReminderService"],
+        ["权限管理", "user.vue、role.vue、menu.vue", "UserService、RoleService、MenuService"],
+    ]
+    add_table(doc, modules)
+
+    add_heading(doc, "STEP 05  集成测试", 1)
+    tests = [
+        ["测试场景", "测试重点", "预期结果"],
+        ["设备借用流程", "可用设备申请、审批、借出、归还", "设备状态正确从可用变为借出，再恢复为可用"],
+        ["耗材出库流程", "库存数量校验、审批、扣减库存", "库存不足时阻止出库，出库成功后数量扣减"],
+        ["危化品领用流程", "审批、双人复核、余量归还、废液处理", "完整记录申请人、审批人、操作人和复核人"],
+        ["权限控制", "不同角色访问菜单和按钮", "无权限用户无法访问受限功能"],
+        ["提醒报表", "校准到期、耗材过期、逾期催还", "提醒列表和报表统计数据正确"],
+    ]
+    add_table(doc, tests)
+
+    add_heading(doc, "AI 交互质疑与最终调整", 2)
+    for idx, text in enumerate(
+        [
+            "最初设计只保留四类角色，未体现设备管理员、耗材管理员、危化品管理员、维修人员和校准人员。最终在用例图和权限说明中补充专项角色，体现真实实验室分工。",
+            "最初库存只描述耗材库存，忽略危化品批次余量。最终使用 inventory 的 item_type + item_id 设计统一库存，同时支持耗材和危化品。",
+            "最初危化品流程缺少双人复核和废液处理。最终在 hazardous_usage 中加入 witness_name、action_type，并在用例说明中明确双人复核。",
+            "最初索引设计容易过度扩展。最终只保留设备状态、借用状态日期、库存批次和预警追溯等高频查询索引。",
+            "最初用例图过于概览，无法说明各角色职责。最终按样板风格重绘多角色用例流程图，并细化专项管理员职责。",
+        ],
+        start=1,
+    ):
+        add_para(doc, f"质问{idx}：{text}", first_line=False)
+
+
+def build() -> None:
+    doc = Document()
+    set_document_style(doc)
+    section = doc.sections[0]
+    section.top_margin = Cm(2.54)
+    section.bottom_margin = Cm(2.54)
+    section.left_margin = Cm(3.0)
+    section.right_margin = Cm(2.6)
+
+    add_cover(doc)
+    add_step_intro(doc)
+    add_requirements(doc)
+    add_usecases(doc)
+    add_database_design(doc)
+    add_physical_and_sql(doc)
+    add_later_steps(doc)
+
+    doc.save(OUTPUT_DOCX)
+
+
+if __name__ == "__main__":
+    build()
+    print(OUTPUT_DOCX)

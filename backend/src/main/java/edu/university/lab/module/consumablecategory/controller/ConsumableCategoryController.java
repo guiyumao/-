@@ -2,6 +2,7 @@ package edu.university.lab.module.consumablecategory.controller;
 
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.consumablecategory.entity.ConsumableCategory;
 import edu.university.lab.module.consumablecategory.service.ConsumableCategoryService;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Consumable Category")
+@Tag(name = "耗材分类")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/consumable-categories")
@@ -27,39 +28,39 @@ public class ConsumableCategoryController {
 
     private final ConsumableCategoryService consumableCategoryService;
 
-    @Operation(summary = "Page consumable categories")
+    @Operation(summary = "分页查询耗材分类")
     @PreAuthorize("hasAuthority('consumable_category:view')")
     @GetMapping
     public ApiResponse<PageResponse<ConsumableCategory>> page(@Valid PageQuery query) {
         return ApiResponse.success(PageResponse.from(consumableCategoryService.pageQuery(query)));
     }
 
-    @Operation(summary = "Get consumable category by id")
+    @Operation(summary = "获取耗材分类详情")
     @PreAuthorize("hasAuthority('consumable_category:view')")
     @GetMapping("/{id}")
     public ApiResponse<ConsumableCategory> getById(@PathVariable Integer id) {
         return ApiResponse.success(consumableCategoryService.getById(id));
     }
 
-    @Operation(summary = "Create consumable category")
+    @Operation(summary = "新增耗材分类")
     @PreAuthorize("hasAuthority('consumable_category:edit')")
     @PostMapping
     public ApiResponse<Boolean> create(@RequestBody ConsumableCategory entity) {
-        return ApiResponse.success("created", consumableCategoryService.save(entity));
+        return ApiResponse.success(Messages.CONSUMABLE_CATEGORY_CREATED, consumableCategoryService.save(entity));
     }
 
-    @Operation(summary = "Update consumable category")
+    @Operation(summary = "更新耗材分类")
     @PreAuthorize("hasAuthority('consumable_category:edit')")
     @PutMapping("/{id}")
     public ApiResponse<Boolean> update(@PathVariable Integer id, @RequestBody ConsumableCategory entity) {
         entity.setId(id);
-        return ApiResponse.success("updated", consumableCategoryService.updateById(entity));
+        return ApiResponse.success(Messages.CONSUMABLE_CATEGORY_UPDATED, consumableCategoryService.updateById(entity));
     }
 
-    @Operation(summary = "Delete consumable category")
+    @Operation(summary = "删除耗材分类")
     @PreAuthorize("hasAuthority('consumable_category:edit')")
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Integer id) {
-        return ApiResponse.success("deleted", consumableCategoryService.removeById(id));
+        return ApiResponse.success(Messages.CONSUMABLE_CATEGORY_DELETED, consumableCategoryService.removeById(id));
     }
 }

@@ -3,6 +3,7 @@ import {
     fetchConsumableCategoryOptions,
     fetchLaboratoryOptions,
     fetchUserOptions,
+    firstOptionId,
     type SelectOption,
 } from '../../api/modules/business'
 
@@ -63,9 +64,9 @@ export function useConsumableCrudConfig() {
             { label: '存放位置', prop: 'storageLocation' },
         ],
         emptyRecord: () => ({
-            laboratoryId: 1,
-            categoryId: 1,
-            managerUserId: 4,
+            laboratoryId: firstOptionId(laboratoryOptions.value) ?? 0,
+            categoryId: firstOptionId(categoryOptions.value) ?? 0,
+            managerUserId: firstOptionId(userOptions.value) ?? 0,
             consumableCode: '',
             consumableName: '',
             specification: '',

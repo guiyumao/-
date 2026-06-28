@@ -1,6 +1,7 @@
 package edu.university.lab.common.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.constant.RoleConstants;
 import edu.university.lab.common.constant.UserConstants;
 import edu.university.lab.module.role.entity.Role;
@@ -12,12 +13,14 @@ import edu.university.lab.module.userrole.mapper.UserRoleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Component
+@Order(10)
 @RequiredArgsConstructor
 public class InitialAdminInitializer implements ApplicationRunner {
 
@@ -38,7 +41,7 @@ public class InitialAdminInitializer implements ApplicationRunner {
             return;
         }
         if (!StringUtils.hasText(properties.getUsername()) || !StringUtils.hasText(properties.getPassword())) {
-            throw new IllegalStateException("Initial admin username and password are required when initialization is enabled");
+            throw new IllegalStateException(Messages.INIT_ADMIN_CONFIG_REQUIRED);
         }
         String username = properties.getUsername().trim();
         boolean exists = userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, username)) > 0;
@@ -50,7 +53,7 @@ public class InitialAdminInitializer implements ApplicationRunner {
             .eq(Role::getRoleCode, RoleConstants.SYS_ADMIN)
             .last("LIMIT 1"));
         if (adminRole == null) {
-            throw new IllegalStateException("System administrator role is missing");
+            throw new IllegalStateException(Messages.INIT_ADMIN_ROLE_MISSING);
         }
 
         User user = new User();

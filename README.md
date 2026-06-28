@@ -77,7 +77,7 @@ PowerShell 执行：
 
 ```env
 APP_INIT_ADMIN_ENABLED=true
-APP_INIT_ADMIN_USERNAME=admin
+APP_INIT_ADMIN_USERNAME=管理员
 APP_INIT_ADMIN_PASSWORD=请替换为强密码
 ```
 
@@ -138,10 +138,18 @@ db/migration/V20260529_01_feature_enhancement.sql
 ```powershell
 docker cp .\db\migration\V20260529_01_feature_enhancement.sql lab-management-mysql:/tmp/V20260529_01_feature_enhancement.sql
 docker exec lab-management-mysql sh -lc "mysql --default-character-set=utf8mb4 -uroot -p$MYSQL_ROOT_PASSWORD lab_management_system < /tmp/V20260529_01_feature_enhancement.sql"
+```
+
+## 典型业务用例
+
+- 设备借用与归还：教师提交借用申请后，管理员可跟进审批、归还登记和逾期提醒。
+- 耗材出入库登记：实验员记录耗材批次、数量、单价和有效期，库存变化同步进入预警视图。
+- 危化品领用闭环：围绕领用、归还和废液处理保留完整记录，便于安全审计和责任追踪。
+- 设备维修与校准：从报修、维修结果到校准确认统一沉淀在台账中，方便复盘设备状态变化。
 
 ## 上线前检查
 
-- 复制 `.env.example` 为生产环境 `.env`，并替换所有 `change-me` 占位值。
+- 复制 `.env.example` 为生产环境 `.env`，并替换所有“请替换”占位提示值。
 - 使用强随机值配置 `APP_JWT_SECRET`，不要使用开发环境示例值。
 - 配置真实域名到 `FRONTEND_PUBLIC_URL`、`BACKEND_PUBLIC_URL`、`VITE_API_BASE_URL` 和 `APP_CORS_ALLOWED_ORIGINS`。
 - 首次启动时启用 `APP_INIT_ADMIN_ENABLED=true` 创建管理员，创建后关闭该开关。

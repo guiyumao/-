@@ -43,17 +43,20 @@ app:
         jwt-secret: ${APP_JWT_SECRET}
         expire-minutes: ${APP_JWT_EXPIRE_MINUTES:720}
     initial-admin:
-        enabled: ${APP_INIT_ADMIN_ENABLED:false}
+        enabled: ${APP_INIT_ADMIN_ENABLED:true}
         username: ${APP_INIT_ADMIN_USERNAME:}
         password: ${APP_INIT_ADMIN_PASSWORD:}
         real-name: ${APP_INIT_ADMIN_REAL_NAME:系统管理员}
         user-no: ${APP_INIT_ADMIN_USER_NO:admin}
+    sample-data:
+        enabled: ${APP_SAMPLE_DATA_ENABLED:true}
+        resource: ${APP_SAMPLE_DATA_RESOURCE:classpath:sample-data/demo-data.json}
 
 openapi:
-    title: ${OPENAPI_TITLE:Laboratory Management System API}
+    title: ${OPENAPI_TITLE:实验室设备与耗材管理系统接口文档}
     version: ${OPENAPI_VERSION:1.0.0}
-    description: ${OPENAPI_DESCRIPTION:Laboratory management backend API documentation}
-    contact-name: ${OPENAPI_CONTACT_NAME:Laboratory Management Team}
+    description: ${OPENAPI_DESCRIPTION:实验室设备与耗材管理系统后端接口说明}
+    contact-name: ${OPENAPI_CONTACT_NAME:实验室平台维护组}
     contact-email: ${OPENAPI_CONTACT_EMAIL:lab-admin@university.edu}
-    external-docs-description: ${OPENAPI_EXTERNAL_DOCS_DESCRIPTION:Project README}
+    external-docs-description: ${OPENAPI_EXTERNAL_DOCS_DESCRIPTION:项目说明文档}
     external-docs-url: ${OPENAPI_EXTERNAL_DOCS_URL:http://127.0.0.1:8080/swagger-ui.html}

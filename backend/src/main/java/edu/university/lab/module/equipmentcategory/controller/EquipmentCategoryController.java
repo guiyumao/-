@@ -2,6 +2,7 @@ package edu.university.lab.module.equipmentcategory.controller;
 
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.equipmentcategory.entity.EquipmentCategory;
 import edu.university.lab.module.equipmentcategory.service.EquipmentCategoryService;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Equipment Category")
+@Tag(name = "设备分类")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/equipment-categories")
@@ -27,39 +28,39 @@ public class EquipmentCategoryController {
 
     private final EquipmentCategoryService equipmentCategoryService;
 
-    @Operation(summary = "Page equipment categories")
+    @Operation(summary = "分页查询设备分类")
     @PreAuthorize("hasAuthority('equipment_category:view')")
     @GetMapping
     public ApiResponse<PageResponse<EquipmentCategory>> page(@Valid PageQuery query) {
         return ApiResponse.success(PageResponse.from(equipmentCategoryService.pageQuery(query)));
     }
 
-    @Operation(summary = "Get equipment category by id")
+    @Operation(summary = "获取设备分类详情")
     @PreAuthorize("hasAuthority('equipment_category:view')")
     @GetMapping("/{id}")
     public ApiResponse<EquipmentCategory> getById(@PathVariable Integer id) {
         return ApiResponse.success(equipmentCategoryService.getById(id));
     }
 
-    @Operation(summary = "Create equipment category")
+    @Operation(summary = "新增设备分类")
     @PreAuthorize("hasAuthority('equipment_category:edit')")
     @PostMapping
     public ApiResponse<Boolean> create(@RequestBody EquipmentCategory entity) {
-        return ApiResponse.success("created", equipmentCategoryService.save(entity));
+        return ApiResponse.success(Messages.EQUIPMENT_CATEGORY_CREATED, equipmentCategoryService.save(entity));
     }
 
-    @Operation(summary = "Update equipment category")
+    @Operation(summary = "更新设备分类")
     @PreAuthorize("hasAuthority('equipment_category:edit')")
     @PutMapping("/{id}")
     public ApiResponse<Boolean> update(@PathVariable Integer id, @RequestBody EquipmentCategory entity) {
         entity.setId(id);
-        return ApiResponse.success("updated", equipmentCategoryService.updateById(entity));
+        return ApiResponse.success(Messages.EQUIPMENT_CATEGORY_UPDATED, equipmentCategoryService.updateById(entity));
     }
 
-    @Operation(summary = "Delete equipment category")
+    @Operation(summary = "删除设备分类")
     @PreAuthorize("hasAuthority('equipment_category:edit')")
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Integer id) {
-        return ApiResponse.success("deleted", equipmentCategoryService.removeById(id));
+        return ApiResponse.success(Messages.EQUIPMENT_CATEGORY_DELETED, equipmentCategoryService.removeById(id));
     }
 }

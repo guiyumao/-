@@ -14,6 +14,10 @@ export function optionsToMap(options: SelectOption[]) {
     }, {})
 }
 
+export function firstOptionId(options: SelectOption[]) {
+    return options.length > 0 ? options[0].id : undefined
+}
+
 export interface InventoryOption {
     id: number
     laboratoryId: number

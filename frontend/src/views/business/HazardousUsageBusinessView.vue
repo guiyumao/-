@@ -2,22 +2,78 @@
     <div>
         <div class="page-header">
             <div>
-                <h2 class="page-title">危化品业务流程</h2>
-                <p class="page-subtitle">危化品入库、领用、归还和废液处理统一登记，按批次校验库存并记录项目与见证人信息。</p>
+                <h2 class="page-title">危化品申领协同</h2>
+                <p class="page-subtitle">危化品入库、领用、归还和废液处理统一登记，按批次校验库存并记录项目、见证人与申请来源。</p>
             </div>
             <el-space>
-                <el-button @click="loadRecords">刷新</el-button>
-                <el-button v-if="authStore.hasPermission('hazardous_usage:edit')" type="primary" @click="dialogVisible = true">新增记录</el-button>
+                <el-button @click="loadAll">刷新</el-button>
+                <el-button v-if="authStore.hasPermission('hazardous_usage:edit')" type="primary" @click="openCreateDialog">新增记录</el-button>
             </el-space>
         </div>
 
-        <el-card class="card-panel" shadow="never" style="margin-bottom: 20px">
-            <el-row :gutter="20">
-                <el-col :span="8"><el-statistic title="业务记录数" :value="records.length" /></el-col>
-                <el-col :span="8"><el-statistic title="领用/处置数量" :value="issueQuantity" /></el-col>
-                <el-col :span="8"><el-statistic title="归还数量" :value="returnQuantity" /></el-col>
-            </el-row>
-        </el-card>
+        <div class="top-flow">
+            <div v-for="step in workflowSteps" :key="step.title" class="flow-card">
+                <span class="flow-index">{{ step.index }}</span>
+                <div>
+                    <strong>{{ step.title }}</strong>
+                    <p>{{ step.desc }}</p>
+                </div>
+            </div>
+        </div>
+
+        <el-row :gutter="20" class="stats-row">
+            <el-col :xs="24" :md="8">
+                <el-card class="card-panel metric-card" shadow="never">
+                    <div class="metric-label">业务记录数</div>
+                    <div class="metric-value">{{ records.length }}</div>
+                    <div class="metric-note">申请、审批、操作与见证信息已串联</div>
+                </el-card>
+            </el-col>
+            <el-col :xs="24" :md="8">
+                <el-card class="card-panel metric-card" shadow="never">
+                    <div class="metric-label">领用/处置数量</div>
+                    <div class="metric-value">{{ issueQuantity }}</div>
+                    <div class="metric-note">来自真实危化记录汇总</div>
+                </el-card>
+            </el-col>
+            <el-col :xs="24" :md="8">
+                <el-card class="card-panel metric-card" shadow="never">
+                    <div class="metric-label">归还数量</div>
+                    <div class="metric-value">{{ returnQuantity }}</div>
+                    <div class="metric-note">用于闭环核对与库存回收</div>
+                </el-card>
+            </el-col>
+        </el-row>
+
+        <div class="sample-showcase">
+            <div class="sample-section-head">
+                <div>
+                    <h3 class="section-title">教师与学生申请样例</h3>
+                    <p class="section-desc">这里直接展示真实危化品申请链路，教师申请和学生申请都保留在同一条业务视图里。</p>
+                </div>
+                <span class="sample-tip">来源：危化品使用记录 + 用户账号 + 批次库存</span>
+            </div>
+            <div class="sample-grid">
+                <div class="sample-card teacher" v-if="teacherSample">
+                    <div class="sample-badge">教师申请样例</div>
+                    <div class="sample-title">{{ userName(teacherSample.applicantUserId) }}申请 {{ materialName(teacherSample.hazardousMaterialId) }}</div>
+                    <p class="sample-line">动作：{{ actionTypeText(teacherSample.actionType) }}</p>
+                    <p class="sample-line">用途：{{ teacherSample.purpose }}</p>
+                    <p class="sample-line">审批：{{ userName(teacherSample.approverUserId) }}</p>
+                    <p class="sample-line">操作：{{ userName(teacherSample.operatorUserId) }}</p>
+                    <p class="sample-line">见证：{{ teacherSample.witnessName || '-' }}</p>
+                </div>
+                <div class="sample-card student" v-if="studentSample">
+                    <div class="sample-badge">学生申请样例</div>
+                    <div class="sample-title">{{ userName(studentSample.applicantUserId) }}申请 {{ materialName(studentSample.hazardousMaterialId) }}</div>
+                    <p class="sample-line">动作：{{ actionTypeText(studentSample.actionType) }}</p>
+                    <p class="sample-line">用途：{{ studentSample.purpose }}</p>
+                    <p class="sample-line">审批：{{ userName(studentSample.approverUserId) }}</p>
+                    <p class="sample-line">操作：{{ userName(studentSample.operatorUserId) }}</p>
+                    <p class="sample-line">见证：{{ studentSample.witnessName || '-' }}</p>
+                </div>
+            </div>
+        </div>
 
         <el-card class="card-panel" shadow="never">
             <el-table v-loading="loading" :data="records">
@@ -34,10 +90,21 @@
                 <el-table-column prop="remainingQuantity" label="剩余数量" min-width="110" />
                 <el-table-column prop="usageDate" label="操作时间" min-width="170" />
                 <el-table-column prop="projectName" label="项目名称" min-width="180" show-overflow-tooltip />
+                <el-table-column label="来源信息" min-width="240">
+                    <template #default="{ row }">
+                        <div class="data-stack">
+                            <strong>申请人：{{ userMap[String(row.applicantUserId)] || row.applicantUserId || '-' }}</strong>
+                            <span>审批人：{{ userMap[String(row.approverUserId)] || row.approverUserId || '-' }}</span>
+                            <span>操作人：{{ userMap[String(row.operatorUserId)] || row.operatorUserId || '-' }}</span>
+                            <span>见证人：{{ row.witnessName || '-' }}</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="remarks" label="来源说明" min-width="180" show-overflow-tooltip />
             </el-table>
         </el-card>
 
-        <el-dialog v-model="dialogVisible" title="新增危化品业务记录" width="840px">
+        <el-dialog v-model="dialogVisible" class="dark-dialog" title="新增危化品业务记录" width="840px">
             <el-form ref="formRef" :model="form" :rules="rules" label-width="150px">
                 <el-form-item label="实验室" prop="laboratoryId">
                     <el-select v-model="form.laboratoryId" placeholder="请选择实验室" style="width: 100%" @change="handleInventoryDependencyChange">
@@ -49,7 +116,7 @@
                         <el-option
                             v-for="item in materialOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
@@ -77,7 +144,7 @@
                             :value="item.batchNo"
                         />
                     </el-select>
-                    <div v-if="form.actionType === 1" style="color: var(--text-secondary); font-size: 12px; margin-top: 6px">
+                    <div v-if="form.actionType === 1" style="color: #92a0b2; font-size: 12px; margin-top: 6px">
                         入库场景请直接填写新的批次号。
                     </div>
                 </el-form-item>
@@ -89,7 +156,7 @@
                         <el-option
                             v-for="item in userOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
@@ -99,7 +166,7 @@
                         <el-option
                             v-for="item in userOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
@@ -109,7 +176,7 @@
                         <el-option
                             v-for="item in userOptions"
                             :key="item.id"
-                            :label="item.subLabel ? `${item.label} (${item.subLabel})` : item.label"
+                            :label="item.subLabel ? `${item.label}（${item.subLabel}）` : item.label"
                             :value="item.id"
                         />
                     </el-select>
@@ -135,8 +202,8 @@
                 <el-form-item label="见证人">
                     <el-input v-model="form.witnessName" />
                 </el-form-item>
-                <el-form-item label="备注">
-                    <el-input v-model="form.remarks" type="textarea" :rows="2" maxlength="255" show-word-limit />
+                <el-form-item label="来源说明">
+                    <el-input v-model="form.remarks" type="textarea" :rows="2" maxlength="255" placeholder="例如：教师课题申请、学生实验消耗、废液处理记录" show-word-limit />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -175,6 +242,7 @@ const materialOptions = ref<SelectOption[]>([])
 const userOptions = ref<SelectOption[]>([])
 const inventoryOptions = ref<InventoryOption[]>([])
 const materialMap = ref<Record<string, string>>({})
+const userMap = ref<Record<string, string>>({})
 const formRef = ref<FormInstance>()
 const authStore = useAuthStore()
 
@@ -198,6 +266,13 @@ const form = reactive({
 const selectedInventory = computed(() => inventoryOptions.value.find((item) => item.batchNo === form.batchNo))
 const issueQuantity = computed(() => records.value.filter((item) => item.actionType === 2 || item.actionType === 4).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0))
 const returnQuantity = computed(() => records.value.filter((item) => item.actionType === 3).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0))
+const teacherSample = computed(() => records.value.find((item) => isTeacherApplicant(item.applicantUserId)))
+const studentSample = computed(() => records.value.find((item) => isStudentApplicant(item.applicantUserId)))
+const workflowSteps = [
+    { index: '01', title: '申请登记', desc: '教师或学生填写用途、项目和批次来源。' },
+    { index: '02', title: '审批领用', desc: '审批人确认后，操作人完成出库或废液处理。' },
+    { index: '03', title: '见证留痕', desc: '每条记录都保留申请人、见证人与来源说明。' },
+]
 
 const rules: FormRules = {
     laboratoryId: [{ required: true, message: '请选择实验室', trigger: 'change' }],
@@ -234,6 +309,41 @@ function actionTypeText(actionType: number) {
     return '废液处理'
 }
 
+function materialName(materialId?: number) {
+    if (!materialId) return '-'
+    return materialMap.value[String(materialId)] || String(materialId)
+}
+
+function userName(userId?: number) {
+    if (!userId) return '-'
+    return userMap.value[String(userId)] || String(userId)
+}
+
+function userOption(userId?: number) {
+    return userOptions.value.find((item) => item.id === userId)
+}
+
+function isTeacherApplicant(userId?: number) {
+    const option = userOption(userId)
+    if (!option) return false
+    return option.subLabel?.startsWith('teacher_') || option.label.endsWith('老师')
+}
+
+function isStudentApplicant(userId?: number) {
+    const option = userOption(userId)
+    if (!option) return false
+    return option.subLabel?.startsWith('student_') || option.label.endsWith('同学')
+}
+
+function openCreateDialog() {
+    resetForm()
+    dialogVisible.value = true
+}
+
+async function loadAll() {
+    await Promise.all([loadOptions(), loadRecords()])
+}
+
 async function loadRecords() {
     loading.value = true
     try {
@@ -254,6 +364,7 @@ async function loadOptions() {
     materialOptions.value = materials
     userOptions.value = users
     materialMap.value = optionsToMap(materials)
+    userMap.value = optionsToMap(users)
 }
 
 async function handleInventoryDependencyChange() {
@@ -311,6 +422,185 @@ async function submitForm() {
 }
 
 onMounted(async () => {
-    await Promise.all([loadOptions(), loadRecords()])
+    await loadAll()
 })
 </script>
+
+<style scoped>
+.top-flow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.flow-card,
+.metric-card,
+.sample-showcase,
+.dark-dialog :deep(.el-dialog) {
+    border: 1px solid rgba(116, 145, 155, 0.16);
+    background: linear-gradient(145deg, rgba(13, 18, 24, 0.99), rgba(25, 31, 39, 0.99));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+}
+
+.flow-card {
+    display: flex;
+    gap: 14px;
+    min-height: 100px;
+    padding: 18px;
+    border-radius: 20px;
+}
+
+.flow-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: rgba(93, 173, 255, 0.15);
+    color: #94d3ff;
+    font-weight: 800;
+}
+
+.flow-card strong,
+.section-title {
+    color: #f5f7fa;
+    font-weight: 800;
+}
+
+.flow-card p,
+.page-subtitle,
+.section-desc,
+.sample-line {
+    color: #a8b3c2;
+    line-height: 1.68;
+}
+
+.stats-row {
+    margin-bottom: 20px;
+}
+
+.metric-card {
+    border-radius: 20px;
+}
+
+.metric-label {
+    color: #92a0b2;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.metric-value {
+    margin-top: 10px;
+    color: #f4f7fb;
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 800;
+}
+
+.metric-note {
+    margin-top: 8px;
+    color: #92a0b2;
+    font-size: 13px;
+}
+
+.sample-showcase {
+    margin-bottom: 20px;
+    padding: 22px;
+    border-radius: 24px;
+}
+
+.sample-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.sample-tip {
+    color: #7f8da0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.sample-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.sample-card {
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(116, 145, 155, 0.16);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.sample-card.teacher {
+    box-shadow: inset 0 0 0 1px rgba(255, 184, 77, 0.12);
+}
+
+.sample-card.student {
+    box-shadow: inset 0 0 0 1px rgba(88, 164, 255, 0.12);
+}
+
+.sample-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #dbe6f5;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sample-title {
+    margin-top: 14px;
+    color: #f5f7fa;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.dark-dialog :deep(.el-dialog) {
+    border-radius: 22px;
+    border: 1px solid rgba(116, 145, 155, 0.18);
+    background: rgba(13, 17, 23, 0.99);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.45);
+}
+
+.dark-dialog :deep(.el-dialog__title) {
+    color: #f5f7fa;
+}
+
+.dark-dialog :deep(.el-dialog__body) {
+    color: #dbe6f5;
+}
+
+.dark-dialog :deep(.el-input__wrapper),
+.dark-dialog :deep(.el-textarea__inner),
+.dark-dialog :deep(.el-select__wrapper) {
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1px rgba(116, 145, 155, 0.14) inset;
+}
+
+.dark-dialog :deep(.el-form-item__label),
+.dark-dialog :deep(.el-radio__label) {
+    color: #dbe6f5;
+}
+
+@media (max-width: 1100px) {
+    .top-flow,
+    .sample-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sample-section-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+</style>

@@ -2,6 +2,7 @@ package edu.university.lab.module.laboratory.controller;
 
 import edu.university.lab.common.api.ApiResponse;
 import edu.university.lab.common.api.PageResponse;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.module.laboratory.entity.Laboratory;
 import edu.university.lab.module.laboratory.service.LaboratoryService;
@@ -52,7 +53,7 @@ public class LaboratoryController {
     @PreAuthorize("hasAuthority('laboratory:edit')")
     @PostMapping
     public ApiResponse<Boolean> create(@RequestBody Laboratory laboratory) {
-        return ApiResponse.success("created", laboratoryService.save(laboratory));
+        return ApiResponse.success(Messages.LABORATORY_CREATED, laboratoryService.save(laboratory));
     }
 
     @Operation(summary = "更新实验室")
@@ -60,13 +61,13 @@ public class LaboratoryController {
     @PutMapping("/{id}")
     public ApiResponse<Boolean> update(@PathVariable Integer id, @RequestBody Laboratory laboratory) {
         laboratory.setId(id);
-        return ApiResponse.success("updated", laboratoryService.updateById(laboratory));
+        return ApiResponse.success(Messages.LABORATORY_UPDATED, laboratoryService.updateById(laboratory));
     }
 
     @Operation(summary = "删除实验室")
     @PreAuthorize("hasAuthority('laboratory:edit')")
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Integer id) {
-        return ApiResponse.success("deleted", laboratoryService.removeById(id));
+        return ApiResponse.success(Messages.LABORATORY_DELETED, laboratoryService.removeById(id));
     }
 }

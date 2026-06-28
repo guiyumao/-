@@ -3,6 +3,7 @@ package edu.university.lab.module.equipmentrepair.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import edu.university.lab.common.audit.AuditLog;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.common.query.PageQuery;
 import edu.university.lab.common.service.BaseCrudService;
 import edu.university.lab.module.equipment.entity.Equipment;
@@ -41,7 +42,7 @@ public class EquipmentRepairServiceImpl extends BaseCrudService<EquipmentRepairM
     public EquipmentRepair createRepair(EquipmentRepair request) {
         Equipment equipment = equipmentService.getById(request.getEquipmentId());
         if (equipment == null) {
-            throw new IllegalArgumentException("Equipment not found");
+            throw new IllegalArgumentException(Messages.EQUIPMENT_NOT_FOUND);
         }
         if (request.getReportTime() == null) {
             request.setReportTime(LocalDateTime.now());
@@ -64,7 +65,7 @@ public class EquipmentRepairServiceImpl extends BaseCrudService<EquipmentRepairM
     public EquipmentRepair updateStatus(Integer id, EquipmentRepair request) {
         EquipmentRepair repair = getById(id);
         if (repair == null) {
-            throw new IllegalArgumentException("Repair record not found");
+            throw new IllegalArgumentException(Messages.REPAIR_NOT_FOUND);
         }
         repair.setRepairUserId(request.getRepairUserId());
         repair.setRepairStatus(request.getRepairStatus());

@@ -7,7 +7,7 @@ export function formatDateTime(value?: string) {
 
 export function borrowStatusText(status: number) {
     if (status === 2) {
-        return '借出中'
+        return '借用中'
     }
     if (status === 3) {
         return '已归还'
@@ -16,7 +16,7 @@ export function borrowStatusText(status: number) {
         return '已逾期'
     }
     if (status === 5) {
-        return '已驳回'
+        return '已拒绝'
     }
     return '待处理'
 }

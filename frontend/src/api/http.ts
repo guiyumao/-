@@ -27,19 +27,26 @@ http.interceptors.response.use(
     },
 )
 
+function unwrapResult<T>(result: ApiResult<T>) {
+    if (result.code !== 200) {
+        throw new Error(result.message || '请求失败')
+    }
+    return result
+}
+
 export async function getResult<T>(url: string, params?: Record<string, unknown>) {
     const response = await http.get<ApiResult<T>>(url, { params })
-    return response.data
+    return unwrapResult(response.data)
 }
 
 export async function postResult<T>(url: string, data: unknown) {
     const response = await http.post<ApiResult<T>>(url, data)
-    return response.data
+    return unwrapResult(response.data)
 }
 
 export async function putResult<T>(url: string, data: unknown) {
     const response = await http.put<ApiResult<T>>(url, data)
-    return response.data
+    return unwrapResult(response.data)
 }
 
 export async function postRaw(url: string, data: unknown) {
@@ -48,5 +55,5 @@ export async function postRaw(url: string, data: unknown) {
 
 export async function deleteResult<T>(url: string) {
     const response = await http.delete<ApiResult<T>>(url)
-    return response.data
+    return unwrapResult(response.data)
 }

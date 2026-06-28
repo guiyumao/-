@@ -163,7 +163,7 @@ async function loadRoles() {
     loadingRoles.value = true
     try {
         const result = await fetchRoles()
-        roles.value = result.data
+        roles.value = result.data.filter((role) => role.status === 1)
         if (!selectedRoleId.value && roles.value.length > 0) {
             selectedRoleId.value = roles.value[0].id
         }

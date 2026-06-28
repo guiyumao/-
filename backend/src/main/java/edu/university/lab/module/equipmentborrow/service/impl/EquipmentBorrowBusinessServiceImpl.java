@@ -3,6 +3,7 @@ package edu.university.lab.module.equipmentborrow.service.impl;
 import edu.university.lab.auth.security.LoginUser;
 import edu.university.lab.auth.security.SecurityUtils;
 import edu.university.lab.common.audit.AuditLog;
+import edu.university.lab.common.constant.Messages;
 import edu.university.lab.module.equipment.entity.Equipment;
 import edu.university.lab.module.equipment.service.EquipmentService;
 import edu.university.lab.module.equipmentborrow.entity.EquipmentBorrow;
@@ -32,14 +33,14 @@ public class EquipmentBorrowBusinessServiceImpl implements EquipmentBorrowBusine
     public EquipmentBorrow borrow(EquipmentBorrow request) {
         Equipment equipment = equipmentService.getById(request.getEquipmentId());
         if (equipment == null || equipment.getStatus() == null || equipment.getStatus() != 1) {
-            throw new IllegalStateException("Equipment is not available for borrowing");
+            throw new IllegalStateException(Messages.EQUIPMENT_NOT_AVAILABLE);
         }
 
         if (request.getBorrowDate() == null) {
             request.setBorrowDate(LocalDateTime.now());
         }
         if (request.getDueDate() == null || request.getDueDate().isBefore(request.getBorrowDate())) {
-            throw new IllegalStateException("Due date must be later than borrow date");
+            throw new IllegalStateException(Messages.DUE_DATE_INVALID);
         }
         request.setBorrowStatus(2);
         equipmentBorrowService.save(request);
@@ -54,10 +55,10 @@ public class EquipmentBorrowBusinessServiceImpl implements EquipmentBorrowBusine
     public boolean returnEquipment(Integer borrowId, String returnCondition, String remarks) {
         EquipmentBorrow borrow = equipmentBorrowService.getById(borrowId);
         if (borrow == null) {
-            throw new IllegalArgumentException("Borrow record not found");
+            throw new IllegalArgumentException(Messages.BORROW_NOT_FOUND);
         }
         if (borrow.getBorrowStatus() != null && borrow.getBorrowStatus() == 3) {
-            throw new IllegalStateException("Equipment has already been returned");
+            throw new IllegalStateException(Messages.ALREADY_RETURNED);
         }
 
         borrow.setBorrowStatus(3);
@@ -80,7 +81,7 @@ public class EquipmentBorrowBusinessServiceImpl implements EquipmentBorrowBusine
     public EquipmentBorrow updateBorrowStatus(Integer borrowId, Integer borrowStatus, String returnCondition, String remarks) {
         EquipmentBorrow borrow = equipmentBorrowService.getById(borrowId);
         if (borrow == null) {
-            throw new IllegalArgumentException("Borrow record not found");
+            throw new IllegalArgumentException(Messages.BORROW_NOT_FOUND);
         }
 
         borrow.setBorrowStatus(borrowStatus);
@@ -103,10 +104,10 @@ public class EquipmentBorrowBusinessServiceImpl implements EquipmentBorrowBusine
     public boolean sendOverdueReminder(Integer borrowId, String message) {
         EquipmentBorrow borrow = equipmentBorrowService.getById(borrowId);
         if (borrow == null) {
-            throw new IllegalArgumentException("Borrow record not found");
+            throw new IllegalArgumentException(Messages.BORROW_NOT_FOUND);
         }
         if (borrow.getBorrowStatus() == null || borrow.getBorrowStatus() != 4) {
-            throw new IllegalStateException("Only overdue borrow records can be reminded");
+            throw new IllegalStateException(Messages.ONLY_OVERDUE_CAN_REMIND);
         }
 
         Equipment equipment = equipmentService.getById(borrow.getEquipmentId());

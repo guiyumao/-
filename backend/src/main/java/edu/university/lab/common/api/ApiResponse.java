@@ -1,5 +1,6 @@
 package edu.university.lab.common.api;
 
+import edu.university.lab.common.constant.Messages;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +24,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
             .code(200)
-            .message("success")
+            .message(Messages.SUCCESS)
             .data(data)
             .build();
     }
